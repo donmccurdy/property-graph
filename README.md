@@ -1,5 +1,9 @@
 # property-graph
 
+[![Latest NPM release](https://img.shields.io/npm/v/property-graph.svg)](https://www.npmjs.com/package/property-graph)
+[![Minzipped size](https://badgen.net/bundlephobia/minzip/property-graph)](https://bundlephobia.com/result?p=property-graph)
+[![License](https://img.shields.io/badge/license-MIT-007ec6.svg)](https://github.com/donmccurdy/property-graph/blob/main/LICENSE)
+
 > **NOTE:** This package is experimental and still under development.
 
 Base for creating objects that behave like a Property Graph.
