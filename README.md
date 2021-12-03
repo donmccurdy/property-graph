@@ -109,6 +109,7 @@ Reference Lists support a named list of connections to graph nodes of a given ty
 
 Reference Maps support a named map having any number of subkeys, where each subkey points to a graph node of a given type:
 
+- `node.getRefMap('key', 'subkey'): GraphNode`
 - `node.setRefMap('key', 'subkey', node: GraphNode): this`
 - `node.listRefMapKeys('key'): string[]`
 - `node.listRefMapValues('key'): GraphNode[]`
