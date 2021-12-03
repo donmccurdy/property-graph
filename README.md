@@ -79,3 +79,36 @@ jo.dispose();
 
 console.log(sam.listRefs('friends')); // → []
 ```
+
+## API
+
+### Literal Attributes
+
+Literal attributes (string, number, boolean, ...) are modified with two methods:
+
+- `node.get('key'): Literal`
+- `node.set('key', value: Literal): this`
+
+### References
+
+
+References support one named connection to a single graph node of a given type:
+
+- `node.getRef('key'): GraphNode`
+- `node.setRef('key', node: GraphNode): this`
+
+### Reference Lists
+
+Reference Lists support a named list of connections to graph nodes of a given type:
+
+- `node.addRef('key', node: GraphNode): this`
+- `node.removeRef('key', node: GraphNode): this`
+- `node.listRefs('key'): GraphNode[]`
+
+### Reference Maps
+
+Reference Maps support a named map having any number of subkeys, where each subkey points to a graph node of a given type:
+
+- `node.setRefMap('key', 'subkey', node: GraphNode): this`
+- `node.listRefMapKeys('key'): string[]`
+- `node.listRefMapValues('key'): GraphNode[]`
