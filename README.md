@@ -65,12 +65,12 @@ The library can be used for both TypeScript and JavaScript projects, but type-ch
 
 Compared to plain getters/setters, this approach makes management of object lifecycles considerably easier:
 
-- GraphNode references are tracked, and can be traversed up or down the graph as needed
-- GraphNode disposal automatically cleans up incoming references from other nodes
-- Locating all nodes that refer _to_ a given node, or that have references _from_ a given node, is trivial
-- Change detection can be enabled on any node attribute or reference, and propagated up or down the graph *(planned)*
-- Replacing references to `X` with `Y` does not require complete knowledge of all GraphNode types and their references
-- Operations like `.copy()` and `.equals()` can be implemented abstractly
+- **Traversal:** References are tracked and can be traversed up or down
+- **Disposal:** GraphNode disposal automatically cleans up incoming references from other nodes
+- **Finding dependents:** Locating all nodes that refer _to_ a given node, or that have references _from_ a given node, is trivial
+- **Change detection:** Detection can be enabled on any node attribute or reference, and propagated up or down the graph *(planned)*
+- **Replacement:** Replacing references to `X` with `Y` does not require complete knowledge of all GraphNode types and their references
+- **Extensibility:** Operations like `.copy()` and `.equals()` can be implemented abstractly
 
 **Lifecycle example:**
 
