@@ -85,10 +85,8 @@ export abstract class GraphNode<Attributes extends {} = {}> {
 	 * Any single-link references (setRef) returned by this method will be considered immutable,
 	 * to be owned by and disposed with the parent node. Multi-link references (addRef, removeRef,
 	 * setRefMap) cannot be returned as default attributes.
-	 *
-	 * TODO(cleanup): getDefaultAttributes -> getDefaults
 	 */
-	protected getDefaultAttributes(): Nullable<Attributes> {
+	protected getDefaults(): Nullable<Attributes> {
 		return {} as Nullable<Attributes>;
 	}
 
@@ -102,7 +100,7 @@ export abstract class GraphNode<Attributes extends {} = {}> {
 	 * @internal
 	 */
 	private _createAttributes(): GraphNodeAttributesInternal<this, Attributes> {
-		const defaultAttributes = this.getDefaultAttributes();
+		const defaultAttributes = this.getDefaults();
 		const attributes = {} as GraphNodeAttributesInternal<this, Attributes>;
 		for (const key in defaultAttributes) {
 			const value = defaultAttributes[key] as any;
@@ -294,7 +292,6 @@ export abstract class GraphNode<Attributes extends {} = {}> {
 	 * @internal
 	 */
 	private _addGraphChild(links: Link<GraphNode, GraphNode>[], link: Link<GraphNode, GraphNode>): this {
-		// TODO(cleanup): Make private?
 		links.push(link);
 		link.onDispose(() => {
 			const remaining = links.filter((l) => l !== link);
@@ -319,7 +316,6 @@ export abstract class GraphNode<Attributes extends {} = {}> {
 	 * @hidden
 	 */
 	protected listGraphParents(): GraphNode[] {
-		// TODO(cleanup): Make public?
 		return this.graph.listParents(this) as GraphNode[];
 	}
 }

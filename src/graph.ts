@@ -15,9 +15,9 @@ export class Graph<T extends GraphNode> {
 	private _parentRefs: Map<T, Set<Link<T, T>>> = new Map();
 	private _childRefs: Map<T, Set<Link<T, T>>> = new Map();
 
-	private _listeners: { [event: string]: ((target: unknown) => void)[] } = {};
+	private _listeners: { [event: string]: ((target: GraphNode) => void)[] } = {};
 
-	public on(type: string, fn: (target: unknown) => void): this {
+	public on(type: string, fn: (target: GraphNode) => void): this {
 		this._listeners[type] = this._listeners[type] || [];
 		this._listeners[type].push(fn);
 		return this;
@@ -29,8 +29,7 @@ export class Graph<T extends GraphNode> {
 	}
 
 	/** Returns a list of all parent->child links on this graph. */
-	public getLinks(): Link<T, T>[] {
-		// TODO(cleanup): getLinks -> listLinks
+	public listLinks(): Link<T, T>[] {
 		return Array.from(this._links);
 	}
 
