@@ -1,0 +1,12 @@
+{
+	"include": ["src/*.ts"],
+	"compilerOptions": {
+		"moduleResolution": "node",
+		"esModuleInterop": true,
+		"lib": ["es6"],
+		"target": "es6",
+		"declaration": true,
+		"typeRoots": ["node_modules/@types"],
+		"strict": true,
+	},
+}
