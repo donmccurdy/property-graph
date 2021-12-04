@@ -8,7 +8,7 @@ import { GraphNode } from './graph-node';
  * that link. The resource does not hold a reference to the link or to the owner,
  * although that reverse lookup can be done on the graph.
  *
- * // TODO(cleanup): Support some kind of type safety for link attributes.
+ * TODO(cleanup): Support some kind of type safety for link attributes.
  *
  * @category Graph
  */
