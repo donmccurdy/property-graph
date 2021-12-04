@@ -1,27 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-types */
-import { Nullable, TypedArray } from './constants';
+import { LiteralKeys, Nullable, RefKeys, RefListKeys, RefMapKeys } from './constants';
 import { Graph } from './graph';
 import { Link } from './graph-link';
 
 // References:
 // - https://stackoverflow.com/a/70163679/1314762
 // - https://stackoverflow.com/a/70201805/1314762
-
-type Literal =
-	| null
-	| boolean
-	| number
-	| string
-	| number[]
-	| string[]
-	| TypedArray
-	| ArrayBuffer
-	| Record<string, unknown>;
-type LiteralKeys<T> = { [K in keyof T]-?: T[K] extends Literal ? K : never }[keyof T];
-type RefKeys<T> = { [K in keyof T]-?: T[K] extends GraphNode ? K : never }[keyof T];
-type RefListKeys<T> = { [K in keyof T]-?: T[K] extends GraphNode[] ? K : never }[keyof T];
-type RefMapKeys<T> = { [K in keyof T]-?: T[K] extends { [key: string]: GraphNode } ? K : never }[keyof T];
 
 type GraphNodeAttributesInternal<Parent extends GraphNode, Attributes extends {}> = {
 	[Key in keyof Attributes]: Attributes[Key] extends GraphNode
@@ -39,7 +24,6 @@ export const $immutableKeys = Symbol('immutableKeys');
 /**
  * Represents a node in a {@link Graph}.
  *
- * @hidden
  * @category Graph
  */
 export abstract class GraphNode<Attributes extends {} = {}> {
@@ -105,7 +89,7 @@ export abstract class GraphNode<Attributes extends {} = {}> {
 		for (const key in defaultAttributes) {
 			const value = defaultAttributes[key] as any;
 			if (value instanceof GraphNode) {
-				const link = this.graph.link(key as string, this, value);
+				const link = this.graph.link(key as string, this, value as GraphNode);
 				link.onDispose(() => value.dispose());
 				this[$immutableKeys].add(key);
 				attributes[key] = link as any;
@@ -194,7 +178,7 @@ export abstract class GraphNode<Attributes extends {} = {}> {
 	protected setRef<K extends RefKeys<Attributes>>(
 		key: K,
 		value: Attributes[K] | null,
-		metadata?: Record<string, unknown>
+		attributes?: Record<string, unknown>
 	): this {
 		if (this[$immutableKeys].has(key as string)) {
 			throw new Error(`Cannot overwrite immutable attribute, "${key}".`);
@@ -205,7 +189,7 @@ export abstract class GraphNode<Attributes extends {} = {}> {
 
 		if (!value) return this;
 
-		const link = this.graph.link(key as string, this, value as unknown as GraphNode, metadata);
+		const link = this.graph.link(key as string, this, value as unknown as GraphNode, attributes);
 		link.onDispose(() => delete this[$attributes][key]);
 		this[$attributes][key] = link as any;
 		return this;
