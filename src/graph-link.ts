@@ -8,19 +8,19 @@ import { GraphNode } from './graph-node';
  * that link. The resource does not hold a reference to the link or to the owner,
  * although that reverse lookup can be done on the graph.
  *
- * @hidden
+ * // TODO(cleanup): Support some kind of type safety for link attributes.
+ *
  * @category Graph
  */
 export class Link<Parent extends GraphNode, Child extends GraphNode> {
 	private _disposed = false;
 	private readonly _listeners: (() => void)[] = [];
 
-	// TODO(cleanup): Support typing metadata.
 	constructor(
 		private readonly _name: string,
 		private readonly _parent: Parent,
 		private _child: Child,
-		private _metadata: Record<string, unknown> = {}
+		private _attributes: Record<string, unknown> = {}
 	) {
 		if (!_parent.canLink(_child)) {
 			throw new Error('Cannot link disconnected graphs.');
@@ -53,9 +53,9 @@ export class Link<Parent extends GraphNode, Child extends GraphNode> {
 		return this;
 	}
 
-	/** Metadata about the parent/child relationship. */
-	getMetadata(): Record<string, unknown> {
-		return this._metadata;
+	/** Attributes of the graph node relationship. */
+	getAttributes(): Record<string, unknown> {
+		return this._attributes;
 	}
 
 	/** Destroys a (currently intact) link, updating both the graph and the owner. */
