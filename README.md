@@ -3,6 +3,7 @@
 [![Latest NPM release](https://img.shields.io/npm/v/property-graph.svg)](https://www.npmjs.com/package/property-graph)
 [![Minzipped size](https://badgen.net/bundlephobia/minzip/property-graph)](https://bundlephobia.com/result?p=property-graph)
 [![License](https://img.shields.io/badge/license-MIT-007ec6.svg)](https://github.com/donmccurdy/property-graph/blob/main/LICENSE)
+[![Build Status](https://github.com/donmccurdy/property-graph/workflows/build/badge.svg?branch=main&event=push)](https://github.com/donmccurdy/property-graph/actions?query=workflow%3Abuild)
 
 > **NOTE:** This package is experimental and still under development.
 
