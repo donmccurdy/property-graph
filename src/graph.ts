@@ -1,6 +1,6 @@
 import { GraphNodeEvent } from '.';
 import { EventDispatcher, GraphEdgeEvent, GraphEvent } from './event-dispatcher';
-import { Link } from './graph-link';
+import { GraphEdge } from './graph-edge';
 import { GraphNode } from './graph-node';
 
 /**
@@ -10,85 +10,89 @@ import { GraphNode } from './graph-node';
  * @category Graph
  */
 export class Graph<T extends GraphNode> extends EventDispatcher<GraphEvent | GraphNodeEvent | GraphEdgeEvent> {
-	private _emptySet: Set<Link<T, T>> = new Set();
+	private _emptySet: Set<GraphEdge<T, T>> = new Set();
 
-	private _links: Set<Link<T, T>> = new Set();
-	private _parentRefs: Map<T, Set<Link<T, T>>> = new Map();
-	private _childRefs: Map<T, Set<Link<T, T>>> = new Map();
+	private _edges: Set<GraphEdge<T, T>> = new Set();
+	private _parentEdges: Map<T, Set<GraphEdge<T, T>>> = new Map();
+	private _childEdges: Map<T, Set<GraphEdge<T, T>>> = new Map();
 
-	/** Returns a list of all parent->child links on this graph. */
-	public listLinks(): Link<T, T>[] {
-		return Array.from(this._links);
+	/** Returns a list of all parent->child edges on this graph. */
+	public listEdges(): GraphEdge<T, T>[] {
+		return Array.from(this._edges);
 	}
 
-	/** Returns a list of all links on the graph having the given node as their child. */
-	public listParentLinks(node: T): Link<T, T>[] {
-		return Array.from(this._childRefs.get(node) || this._emptySet);
+	/** Returns a list of all edges on the graph having the given node as their child. */
+	public listParentEdges(node: T): GraphEdge<T, T>[] {
+		return Array.from(this._childEdges.get(node) || this._emptySet);
 	}
 
 	/** Returns a list of parent nodes for the given child node. */
 	public listParents(node: T): T[] {
-		return this.listParentLinks(node).map((link) => link.getParent());
+		return this.listParentEdges(node).map((edge) => edge.getParent());
 	}
 
-	/** Returns a list of all links on the graph having the given node as their parent. */
-	public listChildLinks(node: T): Link<T, T>[] {
-		return Array.from(this._parentRefs.get(node) || this._emptySet);
+	/** Returns a list of all edges on the graph having the given node as their parent. */
+	public listChildEdges(node: T): GraphEdge<T, T>[] {
+		return Array.from(this._parentEdges.get(node) || this._emptySet);
 	}
 
 	/** Returns a list of child nodes for the given parent node. */
 	public listChildren(node: T): T[] {
-		return this.listChildLinks(node).map((link) => link.getChild());
+		return this.listChildEdges(node).map((edge) => edge.getChild());
 	}
 
 	public disconnectParents(node: T, filter?: (n: T) => boolean): this {
-		let links = this.listParentLinks(node);
+		let edges = this.listParentEdges(node);
 		if (filter) {
-			links = links.filter((link) => filter(link.getParent()));
+			edges = edges.filter((edge) => filter(edge.getParent()));
 		}
-		links.forEach((link) => link.dispose());
+		edges.forEach((edge) => edge.dispose());
 		return this;
 	}
 
 	/**
-	 * Creates a link between two {@link GraphNode} instances. Link is returned
+	 * Creates a {@link GraphEdge} connecting two {@link GraphNode} instances. Edge is returned
 	 * for the caller to store.
 	 * @param a Owner
 	 * @param b Resource
 	 */
-	public link<A extends T, B extends T>(name: string, a: A, b: B, attributes?: Record<string, unknown>): Link<A, B> {
-		return this._registerLink(new Link(name, a, b, attributes)) as Link<A, B>;
+	public createEdge<A extends T, B extends T>(
+		name: string,
+		a: A,
+		b: B,
+		attributes?: Record<string, unknown>
+	): GraphEdge<A, B> {
+		return this._registerEdge(new GraphEdge(name, a, b, attributes)) as GraphEdge<A, B>;
 	}
 
 	/**********************************************************************************************
 	 * Internal.
 	 */
 
-	private _registerLink(link: Link<T, T>): Link<T, T> {
-		this._links.add(link);
+	private _registerEdge(edge: GraphEdge<T, T>): GraphEdge<T, T> {
+		this._edges.add(edge);
 
-		const parent = link.getParent();
-		if (!this._parentRefs.has(parent)) this._parentRefs.set(parent, new Set());
-		this._parentRefs.get(parent)!.add(link);
+		const parent = edge.getParent();
+		if (!this._parentEdges.has(parent)) this._parentEdges.set(parent, new Set());
+		this._parentEdges.get(parent)!.add(edge);
 
-		const child = link.getChild();
-		if (!this._childRefs.has(child)) this._childRefs.set(child, new Set());
-		this._childRefs.get(child)!.add(link);
+		const child = edge.getChild();
+		if (!this._childEdges.has(child)) this._childEdges.set(child, new Set());
+		this._childEdges.get(child)!.add(edge);
 
-		link.addEventListener('dispose', () => this._unlink(link));
-		return link;
+		edge.addEventListener('dispose', () => this._removeEdge(edge));
+		return edge;
 	}
 
 	/**
-	 * Removes the link from the graph. This method should only be invoked by the
-	 * onDispose() listener created in {@link _registerLink()}. The public method
-	 * of removing a link is {@link link.dispose()}.
-	 * @param link
+	 * Removes the {@link GraphEdge} from the {@link Graph}. This method should only
+	 * be invoked by the onDispose() listener created in {@link _registerEdge()}. The
+	 * public method of removing an edge is {@link GraphEdge.dispose}.
 	 */
-	private _unlink(link: Link<T, T>): this {
-		this._links.delete(link);
-		this._parentRefs.get(link.getParent())!.delete(link);
-		this._childRefs.get(link.getChild())!.delete(link);
+	private _removeEdge(edge: GraphEdge<T, T>): this {
+		this._edges.delete(edge);
+		this._parentEdges.get(edge.getParent())!.delete(edge);
+		this._childEdges.get(edge.getChild())!.delete(edge);
 		return this;
 	}
 }

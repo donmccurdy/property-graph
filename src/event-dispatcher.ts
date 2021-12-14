@@ -1,6 +1,6 @@
 import type { Graph } from './graph';
 import type { GraphNode } from './graph-node';
-import type { Link } from './graph-link';
+import type { GraphEdge } from './graph-edge';
 
 export interface BaseEvent {
 	type: string;
@@ -16,7 +16,7 @@ export interface GraphNodeEvent extends BaseEvent {
 }
 
 export interface GraphEdgeEvent extends BaseEvent {
-	target: Link<GraphNode, GraphNode>;
+	target: GraphEdge<GraphNode, GraphNode>;
 }
 
 type EventListener<E> = (event: E) => void;

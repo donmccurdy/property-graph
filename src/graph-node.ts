@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-types */
 import { GraphNodeEvent } from '.';
-import { LiteralKeys, Nullable, RefKeys, RefListKeys, RefMapKeys } from './constants';
+import { LiteralKeys, Nullable, Ref, RefMap, RefKeys, RefListKeys, RefMapKeys } from './constants';
 import { BaseEvent, EventDispatcher } from './event-dispatcher';
 import { Graph } from './graph';
-import { Link } from './graph-link';
-import { isRef, isRefList, isRefMap, Ref, RefMap } from './utils';
+import { GraphEdge } from './graph-edge';
+import { isRef, isRefList, isRefMap } from './utils';
 
 // References:
 // - https://stackoverflow.com/a/70163679/1314762
@@ -13,11 +13,11 @@ import { isRef, isRefList, isRefMap, Ref, RefMap } from './utils';
 
 type GraphNodeAttributesInternal<Parent extends GraphNode, Attributes extends {}> = {
 	[Key in keyof Attributes]: Attributes[Key] extends GraphNode
-		? Link<Parent, Attributes[Key]>
+		? GraphEdge<Parent, Attributes[Key]>
 		: Attributes[Key] extends GraphNode[]
-		? Link<Parent, Attributes[Key][number]>[]
+		? GraphEdge<Parent, Attributes[Key][number]>[]
 		: Attributes[Key] extends { [key: string]: GraphNode }
-		? Record<string, Link<Parent, Attributes[Key][string]>>
+		? Record<string, GraphEdge<Parent, Attributes[Key][string]>>
 		: Attributes[Key];
 };
 
@@ -40,18 +40,18 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 
 	/**
 	 * Attributes (literal values and GraphNode references) associated with this instance. For each
-	 * GraphNode reference, the attributes stores a Link. List and Map references are stored as
-	 * arrays and dictionaries of Links.
+	 * GraphNode reference, the attributes stores a {@link GraphEdge}. List and Map references are
+	 * stored as arrays and dictionaries of edges.
 	 * @internal
 	 */
 	protected readonly [$attributes]: GraphNodeAttributesInternal<this, Attributes>;
 
 	/**
 	 * Attributes included with `getDefaultAttributes` are considered immutable, and cannot be
-	 * modifed by `.setRef()`, `.copy()`, or other GraphNode methods. Both the links and the
+	 * modifed by `.setRef()`, `.copy()`, or other GraphNode methods. Both the edges and the
 	 * properties will be disposed with the parent GraphNode.
 	 *
-	 * Currently, only single-link references (getRef/setRef) are supported as immutables.
+	 * Currently, only single-edge references (getRef/setRef) are supported as immutables.
 	 *
 	 * @internal
 	 */
@@ -70,8 +70,8 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	 * attributes should be given their default values, if any. References should generally be
 	 * initialized as empty (Ref → null, RefList → [], RefMap → {}) and then modified by setters.
 	 *
-	 * Any single-link references (setRef) returned by this method will be considered immutable,
-	 * to be owned by and disposed with the parent node. Multi-link references (addRef, removeRef,
+	 * Any single-edge references (setRef) returned by this method will be considered immutable,
+	 * to be owned by and disposed with the parent node. Multi-edge references (addRef, removeRef,
 	 * setRefMap) cannot be returned as default attributes.
 	 */
 	protected getDefaults(): Nullable<Attributes> {
@@ -82,7 +82,7 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	 * Constructs and returns an object used to store a graph nodes attributes. Compared to the
 	 * default Attributes interface, this has two distinctions:
 	 *
-	 * 1. Slots for GraphNode<T> objects are replaced with slots for Link<this, GraphNode<T>>
+	 * 1. Slots for GraphNode<T> objects are replaced with slots for GraphEdge<this, GraphNode<T>>
 	 * 2. GraphNode<T> objects provided as defaults are considered immutable
 	 *
 	 * @internal
@@ -93,10 +93,10 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 		for (const key in defaultAttributes) {
 			const value = defaultAttributes[key] as any;
 			if (value instanceof GraphNode) {
-				const link = this.graph.link(key, this, value);
-				link.addEventListener('dispose', () => value.dispose());
+				const ref = this.graph.createEdge(key, this, value);
+				ref.addEventListener('dispose', () => value.dispose());
 				this[$immutableKeys].add(key);
-				attributes[key] = link as any;
+				attributes[key] = ref as any;
 			} else {
 				attributes[key] = value as any;
 			}
@@ -104,14 +104,8 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 		return attributes;
 	}
 
-	/**
-	 * Returns true if links between this and the given node are allowed. Validates only that the
-	 * objects are both {@link GraphNode} instances and on the same graph, not that they are
-	 * semantically compatible.
-	 *
-	 * @internal
-	 */
-	public canLink(other: GraphNode): boolean {
+	/** @internal Returns true if two nodes are on the same {@link Graph}. */
+	public isOnGraph(other: GraphNode): boolean {
 		return this.graph === other.graph;
 	}
 
@@ -127,7 +121,7 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	 */
 	public dispose(): void {
 		if (this._disposed) return;
-		this.graph.listChildLinks(this).forEach((link) => link.dispose());
+		this.graph.listChildEdges(this).forEach((edge) => edge.dispose());
 		this.graph.disconnectParents(this);
 		this._disposed = true;
 		this.dispatchEvent({ type: 'dispose' });
@@ -148,7 +142,7 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	 * detached from this parent at the end of the process.
 	 *
 	 * @hidden This method works imperfectly with Root, Scene, and Node properties, which may
-	 * already hold equivalent links to the replacement object.
+	 * already hold equivalent references to the replacement object.
 	 */
 	public swap(old: GraphNode, replacement: GraphNode): this {
 		for (const attribute in this[$attributes]) {
@@ -158,14 +152,14 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 					this.setRef(attribute as any, replacement);
 				}
 			} else if (isRefList(value)) {
-				const links = value as Ref[];
-				if (links.some((link) => link.getChild() === old)) {
+				const refs = value as Ref[];
+				if (refs.some((ref) => ref.getChild() === old)) {
 					this.removeRef(attribute as any, old).addRef(attribute as any, replacement);
 				}
 			} else if (isRefMap(value)) {
-				const linkMap = value as RefMap;
-				for (const key in linkMap) {
-					if (linkMap[key].getChild() === old) {
+				const refMAP = value as RefMap;
+				for (const key in refMAP) {
+					if (refMAP[key].getChild() === old) {
 						this.setRefMap(attribute as any, key, replacement);
 					}
 				}
@@ -214,7 +208,7 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 
 		if (!value) return this;
 
-		const ref = this.graph.link(attribute as string, this, value, attributes);
+		const ref = this.graph.createEdge(attribute as string, this, value, attributes);
 		ref.addEventListener('dispose', () => {
 			delete this[$attributes][attribute];
 			this.dispatchEvent({ type: 'change', attribute });
@@ -240,7 +234,7 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 		value: GraphNode & Attributes[K][keyof Attributes[K]],
 		metadata?: Record<string, unknown>
 	): this {
-		const ref = this.graph.link(attribute as string, this, value, metadata);
+		const ref = this.graph.createEdge(attribute as string, this, value, metadata);
 
 		const refs = this[$attributes][attribute] as Ref[];
 		refs.push(ref);
@@ -306,7 +300,7 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 		if (!value) return this;
 
 		metadata = Object.assign(metadata || {}, { key: key });
-		const ref = this.graph.link(attribute as string, this, value, { ...metadata, key });
+		const ref = this.graph.createEdge(attribute as string, this, value, { ...metadata, key });
 		ref.addEventListener('dispose', () => {
 			delete refMap[key];
 			this.dispatchEvent({ type: 'change', attribute, key });

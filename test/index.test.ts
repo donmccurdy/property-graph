@@ -1,7 +1,7 @@
 require('source-map-support').install();
 
 import test from 'tape';
-import { Graph, GraphNode, Link } from '../';
+import { Graph, GraphNode, GraphEdge } from '../';
 
 interface ITestNode {
 	nodes: TestNode[];
@@ -29,11 +29,11 @@ class TestNode extends GraphNode<ITestNode> {
 test('property-graph::exports', (t: test.Test) => {
 	t.ok(Graph, 'implement Graph');
 	t.ok(GraphNode, 'implement GraphNode');
-	t.ok(Link, 'implement Link');
+	t.ok(GraphEdge, 'implement GraphEdge');
 	t.end();
 });
 
-test('property-graph::graph | link management', (t) => {
+test('property-graph::graph | edge management', (t) => {
 	const graph = new Graph();
 	const root = new TestNode(graph);
 	const a = new TestNode(graph);
@@ -74,7 +74,7 @@ test('property-graph::graph | link management', (t) => {
 	t.end();
 });
 
-test('property-graph::graph | prevents cross-graph linking', (t) => {
+test('property-graph::graph | prevents cross-graph edges', (t) => {
 	const graphA = new Graph();
 	const graphB = new Graph();
 
@@ -86,8 +86,8 @@ test('property-graph::graph | prevents cross-graph linking', (t) => {
 
 	rootA.addNode(nodeA);
 
-	t.throws(() => rootB.addNode(nodeA), 'prevents linking node from another graph, used');
-	t.throws(() => rootA.addNode(nodeB), 'prevents linking node from another graph, unused');
+	t.throws(() => rootB.addNode(nodeA), 'prevents connecting node from another graph, used');
+	t.throws(() => rootA.addNode(nodeB), 'prevents connecting node from another graph, unused');
 	t.end();
 });
 
@@ -100,26 +100,26 @@ test('property-graph::graph | list connections', (t) => {
 	node1.addNode(node2);
 	root.addNode(node1);
 
-	t.equal(graph.listLinks().length, 2, 'listLinks()');
+	t.equal(graph.listEdges().length, 2, 'listEdges()');
 	t.deepEqual(
-		graph.listParentLinks(node1).map((link) => link.getParent()),
+		graph.listParentEdges(node1).map((edge) => edge.getParent()),
 		[root],
-		'listParentLinks(A)'
+		'listParentEdges(A)'
 	);
 	t.deepEqual(
-		graph.listChildLinks(node1).map((link) => link.getChild()),
+		graph.listChildEdges(node1).map((edge) => edge.getChild()),
 		[node2],
-		'listChildLinks(A)'
+		'listChildEdges(A)'
 	);
 	t.deepEqual(
-		graph.listParentLinks(node2).map((link) => link.getParent()),
+		graph.listParentEdges(node2).map((edge) => edge.getParent()),
 		[node1],
-		'listParentLinks(B)'
+		'listParentEdges(B)'
 	);
 	t.deepEqual(
-		graph.listChildLinks(node2).map((link) => link.getChild()),
+		graph.listChildEdges(node2).map((edge) => edge.getChild()),
 		[],
-		'listParentLinks(B)'
+		'listParentEdges(B)'
 	);
 	t.end();
 });

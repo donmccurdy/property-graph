@@ -9,11 +9,9 @@ import { GraphNode } from './graph-node';
  * that link. The resource does not hold a reference to the link or to the owner,
  * although that reverse lookup can be done on the graph.
  *
- * TODO(cleanup): Support some kind of type safety for link attributes.
- *
  * @category Graph
  */
-export class Link<Parent extends GraphNode, Child extends GraphNode> extends EventDispatcher<GraphEdgeEvent> {
+export class GraphEdge<Parent extends GraphNode, Child extends GraphNode> extends EventDispatcher<GraphEdgeEvent> {
 	private _disposed = false;
 
 	constructor(
@@ -23,8 +21,8 @@ export class Link<Parent extends GraphNode, Child extends GraphNode> extends Eve
 		private _attributes: Record<string, unknown> = {}
 	) {
 		super();
-		if (!_parent.canLink(_child)) {
-			throw new Error('Cannot link disconnected graphs.');
+		if (!_parent.isOnGraph(_child)) {
+			throw new Error('Cannot connect disconnected graphs.');
 		}
 	}
 
@@ -59,7 +57,7 @@ export class Link<Parent extends GraphNode, Child extends GraphNode> extends Eve
 		return this._attributes;
 	}
 
-	/** Destroys a (currently intact) link, updating both the graph and the owner. */
+	/** Destroys a (currently intact) edge, updating both the graph and the owner. */
 	dispose(): void {
 		if (this._disposed) return;
 		this._disposed = true;
