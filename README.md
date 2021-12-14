@@ -5,15 +5,29 @@
 [![License](https://img.shields.io/badge/license-MIT-007ec6.svg)](https://github.com/donmccurdy/property-graph/blob/main/LICENSE)
 [![Build Status](https://github.com/donmccurdy/property-graph/workflows/build/badge.svg?branch=main&event=push)](https://github.com/donmccurdy/property-graph/actions?query=workflow%3Abuild)
 
-> **NOTE:** This package is experimental and still under development.
+> **NOTE:** This package is experimental and still under active development.
 
-Base for creating objects that behave like a Property Graph.
+Extensible base for creating objects that behave like a Property Graph.
 
 ## Overview
 
-The `property-graph` package is intended as a foundation for libraries (similar to glTF-Transform) requiring many custom types of compatible parts, which can be represented as a [Property Graph](https://www.dataversity.net/what-is-a-property-graph/#) (useful for dependency chains, node-based shaders, and other resource graphs). The package can represent any [labeled, directed multigraph](https://en.wikipedia.org/wiki/Multigraph#Labeling), including attributes on both graph nodes and edges.
+The `property-graph` package is intended as a foundation for libraries requiring many custom types of compatible parts, which can be represented as a [Property Graph](https://www.dataversity.net/what-is-a-property-graph/#). The Property Graph representation is useful for dependency chains, resource references, node-based art workflows, and a broader class of applications where Graph databases are common.
 
-Beyond that, the package is intended to be small and practical, rather than providing a large standard library for graph theory — if you need that, I'd suggest [`graphology`](https://graphology.github.io/). Typically, you'll define one or more classes inheriting from the base `GraphNode`. When using TypeScript, an interface can be provided defining the kinds of connections the graph node allows. Then, `.set` and `.get` methods may be used to set literal attributes (strings, numbers, booleans, ...), and `.getRef` and `setRef` methods may be used to create links or references to other `GraphNodes` of a compatible type. All references are labeled, and type-safe:
+Conceptually, a Property Graph is a [labeled, directed multigraph](https://en.wikipedia.org/wiki/Multigraph#Labeling), in which objects ("nodes") may have named relationships ("edges") with other nodes on the graph. Both nodes and edges may also be associated with key/value attributes. Beyond that, `property-graph` is intended to be small and practical, rather than providing a large standard library for graph theory — if you need something more comprehensive, I'd suggest [`graphology`](https://graphology.github.io/).
+
+Typically, you'll define several classes inheriting from the base `GraphNode`. When using TypeScript, an interface should be provided defining the kinds of connections that each type of graph node allows. Then, `.set` and `.get` methods may be used to set key/value attributes (strings, numbers, booleans, ...), and `.getRef` and `.setRef` methods may be used to create edges (or relationships) to other `GraphNodes` of a compatible type. All references are labeled, and type-safe:
+
+## Features
+
+In a codebase with many distinct types of entities and relationships among them (e.g. "Client has N Projects", "Project has N Tasks"), this project can make management of entities and their relationships considerably easier than writing plain getters/setters for each case.
+
+- **Traversal:** GraphEdges are tracked and can be traversed up or down
+- **Disposal:** GraphNode disposal automatically cleans up incoming references from other nodes
+- **Finding dependents:** Efficiently locate all GraphNodes that refer _to_ a given GraphNode, or that have references _from_ a given GraphNode
+- **Change detection:** GraphNodes dispatch events when changed, which can be optionally propagated throughout the graph
+- **Extensibility:** Operations like `.copy()`, `.equals()`, and `.swap(a, b)` can be implemented abstractly
+
+## Usage
 
 **Definitions:**
 
@@ -42,7 +56,7 @@ class Pet extends GraphNode<IPet> {
 }
 ```
 
-**Usage:**
+**Basic usage:**
 
 ```typescript
 const graph = new Graph();
@@ -62,18 +76,7 @@ const sam = new Person(graph)
   .addRef('friend', jo);
 ```
 
-The library can be used for both TypeScript and JavaScript projects, but type-checking is only enforced in TypeScript — it does not provide runtime type-checking. Adding custom getters and setters to GraphNode subclasses is often a good idea, and can be used to include additional validation or more complex behaviors.
-
-Compared to plain getters/setters, this approach makes management of object lifecycles considerably easier:
-
-- **Traversal:** References are tracked and can be traversed up or down
-- **Disposal:** GraphNode disposal automatically cleans up incoming references from other nodes
-- **Finding dependents:** Locating all nodes that refer _to_ a given node, or that have references _from_ a given node, is trivial
-- **Change detection:** Detection can be enabled on any node attribute or reference, and propagated up or down the graph *(planned)*
-- **Replacement:** Replacing references to `X` with `Y` does not require complete knowledge of all GraphNode types and their references
-- **Extensibility:** Operations like `.copy()` and `.equals()` can be implemented abstractly
-
-**Lifecycle example:**
+**Lifecycles:**
 
 ```typescript
 jo.equals(sam); // recursive equality → false
