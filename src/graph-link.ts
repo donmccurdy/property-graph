@@ -1,3 +1,4 @@
+import { EventDispatcher, GraphEdgeEvent } from './event-dispatcher';
 import { GraphNode } from './graph-node';
 
 /**
@@ -12,9 +13,8 @@ import { GraphNode } from './graph-node';
  *
  * @category Graph
  */
-export class Link<Parent extends GraphNode, Child extends GraphNode> {
+export class Link<Parent extends GraphNode, Child extends GraphNode> extends EventDispatcher<GraphEdgeEvent> {
 	private _disposed = false;
-	private readonly _listeners: (() => void)[] = [];
 
 	constructor(
 		private readonly _name: string,
@@ -22,6 +22,7 @@ export class Link<Parent extends GraphNode, Child extends GraphNode> {
 		private _child: Child,
 		private _attributes: Record<string, unknown> = {}
 	) {
+		super();
 		if (!_parent.canLink(_child)) {
 			throw new Error('Cannot link disconnected graphs.');
 		}
@@ -62,14 +63,8 @@ export class Link<Parent extends GraphNode, Child extends GraphNode> {
 	dispose(): void {
 		if (this._disposed) return;
 		this._disposed = true;
-		this._listeners.forEach((fn) => fn());
-		this._listeners.length = 0;
-	}
-
-	/** Registers a listener to be invoked if this link is destroyed. */
-	onDispose(fn: () => void): this {
-		this._listeners.push(fn);
-		return this;
+		this.dispatchEvent({ type: 'dispose', target: this });
+		super.dispose();
 	}
 
 	/** Whether this link has been destroyed. */

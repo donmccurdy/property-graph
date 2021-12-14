@@ -1,3 +1,5 @@
+import { GraphNodeEvent } from '.';
+import { EventDispatcher, GraphEdgeEvent, GraphEvent } from './event-dispatcher';
 import { Link } from './graph-link';
 import { GraphNode } from './graph-node';
 
@@ -7,25 +9,12 @@ import { GraphNode } from './graph-node';
  *
  * @category Graph
  */
-export class Graph<T extends GraphNode> {
+export class Graph<T extends GraphNode> extends EventDispatcher<GraphEvent | GraphNodeEvent | GraphEdgeEvent> {
 	private _emptySet: Set<Link<T, T>> = new Set();
 
 	private _links: Set<Link<T, T>> = new Set();
 	private _parentRefs: Map<T, Set<Link<T, T>>> = new Map();
 	private _childRefs: Map<T, Set<Link<T, T>>> = new Map();
-
-	private _listeners: { [event: string]: ((target: GraphNode) => void)[] } = {};
-
-	public on(type: string, fn: (target: GraphNode) => void): this {
-		this._listeners[type] = this._listeners[type] || [];
-		this._listeners[type].push(fn);
-		return this;
-	}
-
-	public emit(type: string, target: T): this {
-		for (const fn of this._listeners[type] || []) fn(target);
-		return this;
-	}
 
 	/** Returns a list of all parent->child links on this graph. */
 	public listLinks(): Link<T, T>[] {
@@ -52,32 +41,12 @@ export class Graph<T extends GraphNode> {
 		return this.listChildLinks(node).map((link) => link.getChild());
 	}
 
-	public disconnectChildren(node: T): this {
-		const links = this._parentRefs.get(node) || this._emptySet;
-		links.forEach((link) => link.dispose());
-		return this;
-	}
-
 	public disconnectParents(node: T, filter?: (n: T) => boolean): this {
-		let links = Array.from(this._childRefs.get(node) || this._emptySet);
+		let links = this.listParentLinks(node);
 		if (filter) {
 			links = links.filter((link) => filter(link.getParent()));
 		}
 		links.forEach((link) => link.dispose());
-		return this;
-	}
-
-	public swapChild(parent: T, prevChild: T, nextChild: T): this {
-		const links = this._parentRefs.get(parent) || this._emptySet;
-		Array.from(links)
-			.filter((link) => link.getChild() === prevChild)
-			.forEach((link) => {
-				this._childRefs.get(prevChild)!.delete(link);
-
-				link.setChild(nextChild);
-				if (!this._childRefs.has(nextChild)) this._childRefs.set(nextChild, new Set());
-				this._childRefs.get(nextChild)!.add(link);
-			});
 		return this;
 	}
 
@@ -87,23 +56,15 @@ export class Graph<T extends GraphNode> {
 	 * @param a Owner
 	 * @param b Resource
 	 */
-	public link<A extends T>(name: string, a: A, b: null, metadata?: unknown): null;
-	public link<A extends T, B extends T>(name: string, a: A, b: B, metadata?: Record<string, unknown>): Link<A, B>;
-	public link<A extends T, B extends T>(
-		name: string,
-		a: A,
-		b: B | null,
-		metadata?: Record<string, unknown>
-	): Link<A, B> | null {
-		// If there's no resource, return a null link. Avoids a lot of boilerplate in node setters.
-		if (!b) return null;
-
-		const link = new Link(name, a, b, metadata);
-		this.registerLink(link);
-		return link;
+	public link<A extends T, B extends T>(name: string, a: A, b: B, attributes?: Record<string, unknown>): Link<A, B> {
+		return this._registerLink(new Link(name, a, b, attributes)) as Link<A, B>;
 	}
 
-	protected registerLink(link: Link<T, T>): Link<T, T> {
+	/**********************************************************************************************
+	 * Internal.
+	 */
+
+	private _registerLink(link: Link<T, T>): Link<T, T> {
 		this._links.add(link);
 
 		const parent = link.getParent();
@@ -114,17 +75,17 @@ export class Graph<T extends GraphNode> {
 		if (!this._childRefs.has(child)) this._childRefs.set(child, new Set());
 		this._childRefs.get(child)!.add(link);
 
-		link.onDispose(() => this.unlink(link));
+		link.addEventListener('dispose', () => this._unlink(link));
 		return link;
 	}
 
 	/**
-	 * Removes the link from the graph. This method should only be invoked by
-	 * the onDispose() listener created in {@link link()}. The public method
+	 * Removes the link from the graph. This method should only be invoked by the
+	 * onDispose() listener created in {@link _registerLink()}. The public method
 	 * of removing a link is {@link link.dispose()}.
 	 * @param link
 	 */
-	private unlink(link: Link<T, T>): this {
+	private _unlink(link: Link<T, T>): this {
 		this._links.delete(link);
 		this._parentRefs.get(link.getParent())!.delete(link);
 		this._childRefs.get(link.getChild())!.delete(link);

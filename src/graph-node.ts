@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-types */
+import { GraphNodeEvent } from '.';
 import { LiteralKeys, Nullable, RefKeys, RefListKeys, RefMapKeys } from './constants';
+import { BaseEvent, EventDispatcher } from './event-dispatcher';
 import { Graph } from './graph';
 import { Link } from './graph-link';
+import { isRef, isRefList, isRefMap, Ref, RefMap } from './utils';
 
 // References:
 // - https://stackoverflow.com/a/70163679/1314762
@@ -26,7 +29,7 @@ export const $immutableKeys = Symbol('immutableKeys');
  *
  * @category Graph
  */
-export abstract class GraphNode<Attributes extends {} = {}> {
+export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatcher<GraphNodeEvent> {
 	private _disposed = false;
 
 	/**
@@ -55,6 +58,7 @@ export abstract class GraphNode<Attributes extends {} = {}> {
 	protected readonly [$immutableKeys]: Set<string>;
 
 	constructor(graph: Graph<GraphNode>) {
+		super();
 		this.graph = graph;
 		this[$immutableKeys] = new Set();
 		this[$attributes] = this._createAttributes();
@@ -89,8 +93,8 @@ export abstract class GraphNode<Attributes extends {} = {}> {
 		for (const key in defaultAttributes) {
 			const value = defaultAttributes[key] as any;
 			if (value instanceof GraphNode) {
-				const link = this.graph.link(key as string, this, value as GraphNode);
-				link.onDispose(() => value.dispose());
+				const link = this.graph.link(key, this, value);
+				link.addEventListener('dispose', () => value.dispose());
 				this[$immutableKeys].add(key);
 				attributes[key] = link as any;
 			} else {
@@ -122,10 +126,11 @@ export abstract class GraphNode<Attributes extends {} = {}> {
 	 * disposed object is not reusable.
 	 */
 	public dispose(): void {
-		this.graph.disconnectChildren(this);
+		if (this._disposed) return;
+		this.graph.listChildLinks(this).forEach((link) => link.dispose());
 		this.graph.disconnectParents(this);
 		this._disposed = true;
-		this.graph.emit('dispose', this);
+		this.dispatchEvent({ type: 'dispose' });
 	}
 
 	/**
@@ -146,7 +151,26 @@ export abstract class GraphNode<Attributes extends {} = {}> {
 	 * already hold equivalent links to the replacement object.
 	 */
 	public swap(old: GraphNode, replacement: GraphNode): this {
-		this.graph.swapChild(this, old, replacement);
+		for (const attribute in this[$attributes]) {
+			const value = this[$attributes][attribute] as Ref | Ref[] | RefMap;
+			if (isRef(value)) {
+				if ((value as Ref).getChild() === old) {
+					this.setRef(attribute as any, replacement);
+				}
+			} else if (isRefList(value)) {
+				const links = value as Ref[];
+				if (links.some((link) => link.getChild() === old)) {
+					this.removeRef(attribute as any, old).addRef(attribute as any, replacement);
+				}
+			} else if (isRefMap(value)) {
+				const linkMap = value as RefMap;
+				for (const key in linkMap) {
+					if (linkMap[key].getChild() === old) {
+						this.setRefMap(attribute as any, key, replacement);
+					}
+				}
+			}
+		}
 		return this;
 	}
 
@@ -155,73 +179,95 @@ export abstract class GraphNode<Attributes extends {} = {}> {
 	 */
 
 	/** @hidden */
-	protected get<K extends LiteralKeys<Attributes>>(key: K): Attributes[K] {
-		return this[$attributes][key] as Attributes[K];
+	protected get<K extends LiteralKeys<Attributes>>(attribute: K): Attributes[K] {
+		return this[$attributes][attribute] as Attributes[K];
 	}
 
 	/** @hidden */
-	protected set<K extends LiteralKeys<Attributes>>(key: K, value: Attributes[K]): this {
-		(this[$attributes][key] as Attributes[K]) = value;
-		return this;
+	protected set<K extends LiteralKeys<Attributes>>(attribute: K, value: Attributes[K]): this {
+		(this[$attributes][attribute] as Attributes[K]) = value;
+		return this.dispatchEvent({ type: 'change', attribute });
 	}
 
 	/**********************************************************************************************
-	 * 1:1 graph node references.
+	 * Ref: 1:1 graph node references.
 	 */
 
 	/** @hidden */
-	protected getRef<K extends RefKeys<Attributes>>(key: K): Attributes[K] | null {
-		return this[$attributes][key] ? (this[$attributes][key] as any).getChild() : null;
+	protected getRef<K extends RefKeys<Attributes>>(attribute: K): (GraphNode & Attributes[K]) | null {
+		const ref = this[$attributes][attribute] as Ref;
+		return ref ? (ref.getChild() as GraphNode & Attributes[K]) : null;
 	}
 
 	/** @hidden */
 	protected setRef<K extends RefKeys<Attributes>>(
-		key: K,
-		value: Attributes[K] | null,
+		attribute: K,
+		value: (GraphNode & Attributes[K]) | null,
 		attributes?: Record<string, unknown>
 	): this {
-		if (this[$immutableKeys].has(key as string)) {
-			throw new Error(`Cannot overwrite immutable attribute, "${key}".`);
+		if (this[$immutableKeys].has(attribute as string)) {
+			throw new Error(`Cannot overwrite immutable attribute, "${attribute}".`);
 		}
 
-		const prevLink = this[$attributes][key] as Link<this, GraphNode>;
-		if (prevLink) prevLink.dispose();
+		const prevRef = this[$attributes][attribute] as Ref;
+		if (prevRef) prevRef.dispose(); // TODO(cleanup): Possible duplicate event.
 
 		if (!value) return this;
 
-		const link = this.graph.link(key as string, this, value as unknown as GraphNode, attributes);
-		link.onDispose(() => delete this[$attributes][key]);
-		this[$attributes][key] = link as any;
-		return this;
+		const ref = this.graph.link(attribute as string, this, value, attributes);
+		ref.addEventListener('dispose', () => {
+			delete this[$attributes][attribute];
+			this.dispatchEvent({ type: 'change', attribute });
+		});
+		(this[$attributes][attribute] as Ref) = ref;
+
+		return this.dispatchEvent({ type: 'change', attribute });
 	}
 
 	/**********************************************************************************************
-	 * 1:many graph node references.
+	 * RefList: 1:many graph node references.
 	 */
 
 	/** @hidden */
-	protected listRefs<K extends RefListKeys<Attributes>>(key: K): Attributes[K] {
-		const refs = this[$attributes][key] as Link<this, GraphNode>[];
-		return refs.map((link) => link.getChild()) as unknown as Attributes[K];
+	protected listRefs<K extends RefListKeys<Attributes>>(attribute: K): GraphNode[] & Attributes[K] {
+		const refs = this[$attributes][attribute] as Ref[];
+		return refs.map((ref) => ref.getChild()) as GraphNode[] & Attributes[K];
 	}
 
 	/** @hidden */
 	protected addRef<K extends RefListKeys<Attributes>>(
-		key: K,
-		value: Attributes[K][keyof Attributes[K]],
+		attribute: K,
+		value: GraphNode & Attributes[K][keyof Attributes[K]],
 		metadata?: Record<string, unknown>
 	): this {
-		const link = this.graph.link(key as string, this, value as unknown as GraphNode, metadata) as any;
-		return this._addGraphChild(this[$attributes][key] as Link<this, GraphNode>[], link);
+		const ref = this.graph.link(attribute as string, this, value, metadata);
+
+		const refs = this[$attributes][attribute] as Ref[];
+		refs.push(ref);
+
+		ref.addEventListener('dispose', () => {
+			const retained = refs.filter((l) => l !== ref);
+			refs.length = 0;
+			for (const retainedRef of retained) refs.push(retainedRef);
+			this.dispatchEvent({ type: 'change', attribute });
+		});
+
+		return this.dispatchEvent({ type: 'change', attribute });
 	}
 
 	/** @hidden */
-	protected removeRef<K extends RefListKeys<Attributes>>(key: K, value: Attributes[K][keyof Attributes[K]]): this {
-		return this._removeGraphChild(this[$attributes][key] as Link<this, GraphNode>[], value as unknown as GraphNode);
+	protected removeRef<K extends RefListKeys<Attributes>>(
+		attribute: K,
+		value: GraphNode & Attributes[K][keyof Attributes[K]]
+	): this {
+		const refs = this[$attributes][attribute] as Ref[];
+		const pruned = refs.filter((ref) => ref.getChild() === value);
+		pruned.forEach((ref) => ref.dispose()); // TODO(cleanup): Possible duplicate event.
+		return this;
 	}
 
 	/**********************************************************************************************
-	 * Named 1:many (map) graph node references.
+	 * RefMap: Named 1:many (map) graph node references.
 	 */
 
 	/** @hidden */
@@ -230,76 +276,53 @@ export abstract class GraphNode<Attributes extends {} = {}> {
 	}
 
 	/** @hidden */
-	protected listRefMapValues<K extends RefMapKeys<Attributes>>(key: K): Attributes[K][keyof Attributes[K]][] {
-		return Object.values(this[$attributes][key]).map((link: any) => link.getChild());
+	protected listRefMapValues<K extends RefMapKeys<Attributes>>(
+		key: K
+	): GraphNode[] & Attributes[K][keyof Attributes[K]][] {
+		return Object.values(this[$attributes][key]).map((ref: any) => ref.getChild());
 	}
 
 	/** @hidden */
 	protected getRefMap<K extends RefMapKeys<Attributes>, SK extends keyof Attributes[K]>(
-		key: K,
-		subkey: SK
-	): Attributes[K][SK] | null {
-		const refMap = this[$attributes][key] as Record<keyof Attributes[K], Link<this, GraphNode>>;
-		return refMap[subkey] ? (refMap[subkey].getChild() as unknown as Attributes[K][SK]) : null;
+		attribute: K,
+		key: SK
+	): (GraphNode & Attributes[K][SK]) | null {
+		const refMap = this[$attributes][attribute] as any;
+		return refMap[key] ? refMap[key].getChild() : null;
 	}
 
 	/** @hidden */
 	protected setRefMap<K extends RefMapKeys<Attributes>, SK extends keyof Attributes[K]>(
-		key: K,
-		subkey: SK,
-		value: Attributes[K][SK] | null,
+		attribute: K,
+		key: SK,
+		value: (GraphNode & Attributes[K][SK]) | null,
 		metadata?: Record<string, unknown>
 	): this {
-		const refMap = this[$attributes][key] as Record<keyof Attributes[K], Link<this, GraphNode>>;
+		const refMap = this[$attributes][attribute] as any;
 
-		const prevLink = refMap[subkey] as Link<this, GraphNode<Attributes[K][SK]>>;
-		if (prevLink) prevLink.dispose();
+		const prevRef = refMap[key];
+		if (prevRef) prevRef.dispose(); // TODO(cleanup): Possible duplicate event.
 
 		if (!value) return this;
 
-		const link = this.graph.link(subkey as string, this, value as unknown as GraphNode, metadata) as any;
-		link.onDispose(() => delete refMap[subkey]);
-		refMap[subkey] = link;
-		return this;
+		metadata = Object.assign(metadata || {}, { key: key });
+		const ref = this.graph.link(attribute as string, this, value, { ...metadata, key });
+		ref.addEventListener('dispose', () => {
+			delete refMap[key];
+			this.dispatchEvent({ type: 'change', attribute, key });
+		});
+		refMap[key] = ref;
+
+		return this.dispatchEvent({ type: 'change', attribute, key });
 	}
 
 	/**********************************************************************************************
-	 * Internal attribute management APIs.
+	 * Events.
 	 */
 
-	/**
-	 * Adds a Link to a managed {@link @GraphChildList}, and sets up a listener to
-	 * remove the link if it's disposed. This function is only for lists of links,
-	 * annotated with {@link @GraphChildList}. Properties are annotated and managed by
-	 * {@link @GraphChild} instead.
-	 *
-	 * @internal
-	 */
-	private _addGraphChild(links: Link<GraphNode, GraphNode>[], link: Link<GraphNode, GraphNode>): this {
-		links.push(link);
-		link.onDispose(() => {
-			const remaining = links.filter((l) => l !== link);
-			links.length = 0;
-			for (const link of remaining) links.push(link);
-		});
+	dispatchEvent(event: BaseEvent): this {
+		super.dispatchEvent({ ...event, target: this });
+		this.graph.dispatchEvent({ ...event, target: this, type: `node:${event.type}` });
 		return this;
-	}
-
-	/** @internal Removes a {@link GraphNode} from a {@link GraphChildList}. */
-	private _removeGraphChild(links: Link<GraphNode, GraphNode>[], child: GraphNode): this {
-		const pruned = links.filter((link) => link.getChild() === child);
-		pruned.forEach((link) => link.dispose());
-		return this;
-	}
-
-	/**
-	 * Returns a list of all nodes that hold a reference to this node.
-	 *
-	 * Available publicly by {@link Property}'s `.listParents()`.
-	 *
-	 * @hidden
-	 */
-	protected listGraphParents(): GraphNode[] {
-		return this.graph.listParents(this) as GraphNode[];
 	}
 }

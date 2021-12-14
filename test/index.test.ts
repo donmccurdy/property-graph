@@ -131,7 +131,7 @@ test('property-graph::graph | dispose events', (t) => {
 
 	const disposed = [] as unknown[];
 
-	graph.on('dispose', (target: unknown) => disposed.push(target));
+	graph.addEventListener('node:dispose', ({ target }) => disposed.push(target));
 
 	t.deepEqual(disposed, [], 'disposed: 0');
 	t.notOk(node1.isDisposed(), 'node1 active');
