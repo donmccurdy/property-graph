@@ -43,8 +43,5 @@
 		"README.md",
 		"LICENSE",
 		"package.json"
-	],
-	"mangle": {
-		"regex": "^_"
-	}
+	]
 }
