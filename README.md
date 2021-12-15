@@ -73,7 +73,7 @@ const jo = new Person(graph)
 const sam = new Person(graph)
   .set('name', 'Sam')
   .set('age', 45)
-  .addRef('friend', jo);
+  .addRef('friends', jo);
 ```
 
 **Lifecycles:**
