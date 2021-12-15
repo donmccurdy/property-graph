@@ -121,3 +121,9 @@ Reference Maps support a named map having any number of subkeys, where each subk
 - `node.setRefMap('key', 'subkey', node: GraphNode): this`
 - `node.listRefMapKeys('key'): string[]`
 - `node.listRefMapValues('key'): GraphNode[]`
+
+## References
+
+- [The Property Graph Database Model](http://ceur-ws.org/Vol-2100/paper26.pdf)
+- [Graph Fundamentals — Part 2: Labelled Property Graphs](https://medium.com/terminusdb/graph-fundamentals-part-2-labelled-property-graphs-ba9a8edb5dfe)
+- [OpenCypher – Property Graph Model](https://github.com/opencypher/openCypher/blob/master/docs/property-graph-model.adoc)
