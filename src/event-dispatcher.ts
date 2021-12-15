@@ -19,9 +19,9 @@ export interface GraphEdgeEvent extends BaseEvent {
 	target: GraphEdge<GraphNode, GraphNode>;
 }
 
-type EventListener<E> = (event: E) => void;
+export type EventListener<E> = (event: E) => void;
 
-class EventDispatcher<T extends BaseEvent> {
+export class EventDispatcher<T extends BaseEvent> {
 	private _listeners = {} as Record<string, EventListener<T>[]>;
 
 	addEventListener(type: string, listener: EventListener<T>): this {
@@ -79,5 +79,3 @@ class EventDispatcher<T extends BaseEvent> {
 		}
 	}
 }
-
-export { EventDispatcher };
