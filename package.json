@@ -1,6 +1,6 @@
 {
 	"name": "property-graph",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "Base for creating objects that behave like a Property Graph.",
 	"sideEffects": false,
 	"main": "dist/property-graph.js",
