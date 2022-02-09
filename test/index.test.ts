@@ -18,6 +18,9 @@ class TestNode extends GraphNode<ITestNode> {
 	addNode(node: TestNode): this {
 		return this.addRef('nodes', node);
 	}
+	addNodeWithLabel(node: TestNode, label: string): this {
+		return this.addRef('nodes', node, { label });
+	}
 	removeNode(node: TestNode): this {
 		return this.removeRef('nodes', node);
 	}
@@ -164,5 +167,14 @@ test('property-graph::graph-node | swap', (t) => {
 	t.deepEqual(graph.listChildren(root), [b], 'consistent graph state, parentRefs');
 	t.deepEqual(graph.listParents(a), [], 'consistent graph state, childRefs (1/2)');
 	t.deepEqual(graph.listParents(b), [root], 'consistent graph state, childRefs (2/2)');
+
+	const listLabels = (edges: GraphEdge<GraphNode, GraphNode>[]) => edges.map((edge) => edge.getAttributes());
+
+	root.removeNode(b);
+	root.addNodeWithLabel(a, 'custom-label');
+	t.deepEquals(listLabels(graph.listParentEdges(a)), [{ label: 'custom-label' }], 'initial attributes');
+	root.swap(a, b);
+	t.deepEquals(listLabels(graph.listParentEdges(a)), [], 'removed old edge');
+	t.deepEquals(listLabels(graph.listParentEdges(b)), [{ label: 'custom-label' }], 'persist attributes');
 	t.end();
 });
