@@ -148,19 +148,23 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 		for (const attribute in this[$attributes]) {
 			const value = this[$attributes][attribute] as Ref | Ref[] | RefMap;
 			if (isRef(value)) {
-				if ((value as Ref).getChild() === old) {
-					this.setRef(attribute as any, replacement);
+				const ref = value as Ref;
+				if (ref.getChild() === old) {
+					this.setRef(attribute as any, replacement, ref.getAttributes());
 				}
 			} else if (isRefList(value)) {
 				const refs = value as Ref[];
-				if (refs.some((ref) => ref.getChild() === old)) {
-					this.removeRef(attribute as any, old).addRef(attribute as any, replacement);
+				const ref = refs.find((ref) => ref.getChild() === old);
+				if (ref) {
+					const refAttributes = ref.getAttributes();
+					this.removeRef(attribute as any, old).addRef(attribute as any, replacement, refAttributes);
 				}
 			} else if (isRefMap(value)) {
-				const refMAP = value as RefMap;
-				for (const key in refMAP) {
-					if (refMAP[key].getChild() === old) {
-						this.setRefMap(attribute as any, key, replacement);
+				const refMap = value as RefMap;
+				for (const key in refMap) {
+					const ref = refMap[key];
+					if (ref.getChild() === old) {
+						this.setRefMap(attribute as any, key, replacement, ref.getAttributes());
 					}
 				}
 			}
@@ -232,9 +236,9 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	protected addRef<K extends RefListKeys<Attributes>>(
 		attribute: K,
 		value: GraphNode & Attributes[K][keyof Attributes[K]],
-		metadata?: Record<string, unknown>
+		attributes?: Record<string, unknown>
 	): this {
-		const ref = this.graph.createEdge(attribute as string, this, value, metadata);
+		const ref = this.graph.createEdge(attribute as string, this, value, attributes);
 
 		const refs = this[$attributes][attribute] as Ref[];
 		refs.push(ref);
