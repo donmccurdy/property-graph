@@ -204,7 +204,7 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 		attributes?: Record<string, unknown>
 	): this {
 		if (this[$immutableKeys].has(attribute as string)) {
-			throw new Error(`Cannot overwrite immutable attribute, "${attribute}".`);
+			throw new Error(`Cannot overwrite immutable attribute, "${attribute as string}".`);
 		}
 
 		const prevRef = this[$attributes][attribute] as Ref;

@@ -48,5 +48,6 @@
 		"README.md",
 		"LICENSE",
 		"package.json"
-	]
+	],
+	"dependencies": {}
 }
