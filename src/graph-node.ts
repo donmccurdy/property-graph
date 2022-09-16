@@ -270,14 +270,14 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 
 	/** @hidden */
 	protected listRefMapKeys<K extends RefMapKeys<Attributes>>(key: K): string[] {
-		return Object.keys(this[$attributes][key]);
+		return Object.keys(this[$attributes][key] as any);
 	}
 
 	/** @hidden */
 	protected listRefMapValues<K extends RefMapKeys<Attributes>>(
 		key: K
 	): GraphNode[] & Attributes[K][keyof Attributes[K]][] {
-		return Object.values(this[$attributes][key]).map((ref: any) => ref.getChild());
+		return Object.values(this[$attributes][key] as any).map((ref: any) => ref.getChild());
 	}
 
 	/** @hidden */
