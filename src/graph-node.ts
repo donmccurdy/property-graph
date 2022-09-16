@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-types */
-import { GraphNodeEvent } from '.';
-import { LiteralKeys, Nullable, Ref, RefMap, RefKeys, RefListKeys, RefMapKeys } from './constants';
-import { BaseEvent, EventDispatcher } from './event-dispatcher';
+import { LiteralKeys, Nullable, RefKeys, RefListKeys, RefMapKeys } from './constants';
+import { BaseEvent, EventDispatcher, GraphNodeEvent } from './event-dispatcher';
 import { Graph } from './graph';
 import { GraphEdge } from './graph-edge';
+import { Ref, RefList, RefMap } from './refs';
 import { isRef, isRefList, isRefMap } from './utils';
 
 // References:
@@ -92,6 +92,8 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 		const attributes = {} as GraphNodeAttributesInternal<this, Attributes>;
 		for (const key in defaultAttributes) {
 			const value = defaultAttributes[key] as any;
+			// TODO(api): If implementation exposes Ref<Property> then
+			// presumably it must also pass one here?
 			if (value instanceof GraphNode) {
 				const ref = this.graph.createEdge(key, this, value);
 				ref.addEventListener('dispose', () => value.dispose());
@@ -244,9 +246,8 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 		refs.push(ref);
 
 		ref.addEventListener('dispose', () => {
-			const retained = refs.filter((l) => l !== ref);
-			refs.length = 0;
-			for (const retainedRef of retained) refs.push(retainedRef);
+			const refIndex = refs.indexOf(ref);
+			if (refIndex >= 0) refs.splice(refIndex, 1);
 			this.dispatchEvent({ type: 'change', attribute });
 		});
 
