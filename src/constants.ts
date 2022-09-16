@@ -1,5 +1,4 @@
-import type { GraphEdge } from './graph-edge.js';
-import type { GraphNode } from './graph-node.js';
+import type { Ref, RefList, RefMap } from './refs.js';
 
 /** TypeScript utility for nullable types. */
 export type Nullable<T> = { [P in keyof T]: T[P] | null };
@@ -19,10 +18,6 @@ export type Literal =
 	| Record<string, unknown>;
 
 export type LiteralKeys<T> = { [K in keyof T]-?: T[K] extends Literal ? K : never }[keyof T];
-export type RefKeys<T> = { [K in keyof T]-?: T[K] extends GraphNode ? K : never }[keyof T];
-export type RefListKeys<T> = { [K in keyof T]-?: T[K] extends GraphNode[] ? K : never }[keyof T];
-export type RefMapKeys<T> = { [K in keyof T]-?: T[K] extends { [key: string]: GraphNode } ? K : never }[keyof T];
-
-export type Ref = GraphEdge<GraphNode, GraphNode>;
-export type RefMap = { [key: string]: Ref };
-export type UnknownRef = Ref | Ref[] | RefMap | unknown;
+export type RefKeys<T> = { [K in keyof T]-?: T[K] extends Ref ? K : never }[keyof T];
+export type RefListKeys<T> = { [K in keyof T]-?: T[K] extends RefList ? K : never }[keyof T];
+export type RefMapKeys<T> = { [K in keyof T]-?: T[K] extends RefMap ? K : never }[keyof T];
