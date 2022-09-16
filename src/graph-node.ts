@@ -121,7 +121,7 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	 */
 	public dispose(): void {
 		if (this._disposed) return;
-		this.graph.listChildEdges(this).forEach((edge) => edge.dispose());
+		this.graph.disconnectChildren(this);
 		this.graph.disconnectParents(this);
 		this._disposed = true;
 		this.dispatchEvent({ type: 'dispose' });

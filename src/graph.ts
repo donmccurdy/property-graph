@@ -17,36 +17,51 @@ export class Graph<T extends GraphNode> extends EventDispatcher<GraphEvent | Gra
 	private _childEdges: Map<T, Set<GraphEdge<T, T>>> = new Map();
 
 	/** Returns a list of all parent->child edges on this graph. */
-	public listEdges(): GraphEdge<T, T>[] {
-		return Array.from(this._edges);
+	public *listEdges(): Iterable<GraphEdge<T, T>> {
+		for (const edge of this._edges) yield edge;
 	}
 
 	/** Returns a list of all edges on the graph having the given node as their child. */
-	public listParentEdges(node: T): GraphEdge<T, T>[] {
-		return Array.from(this._childEdges.get(node) || this._emptySet);
+	public *listParentEdges(node: T): Iterable<GraphEdge<T, T>> {
+		const edges = this._childEdges.get(node) || this._emptySet;
+		for (const edge of edges) yield edge;
 	}
 
 	/** Returns a list of parent nodes for the given child node. */
-	public listParents(node: T): T[] {
-		return this.listParentEdges(node).map((edge) => edge.getParent());
+	public *listParents(node: T): Iterator<T> {
+		for (const edge of this.listParentEdges(node)) {
+			yield edge.getParent();
+		}
 	}
 
 	/** Returns a list of all edges on the graph having the given node as their parent. */
-	public listChildEdges(node: T): GraphEdge<T, T>[] {
-		return Array.from(this._parentEdges.get(node) || this._emptySet);
+	public *listChildEdges(node: T): Iterable<GraphEdge<T, T>> {
+		const edges = this._parentEdges.get(node) || this._emptySet;
+		for (const edge of edges) yield edge;
 	}
 
 	/** Returns a list of child nodes for the given parent node. */
-	public listChildren(node: T): T[] {
-		return this.listChildEdges(node).map((edge) => edge.getChild());
+	public *listChildren(node: T): Iterable<T> {
+		for (const edge of this.listChildEdges(node)) {
+			yield edge.getChild();
+		}
+	}
+
+	public disconnectChildren(node: T, filter?: (n: T) => boolean): this {
+		for (const edge of this.listChildEdges(node)) {
+			if (!filter || filter(edge.getChild())) {
+				edge.dispose();
+			}
+		}
+		return this;
 	}
 
 	public disconnectParents(node: T, filter?: (n: T) => boolean): this {
-		let edges = this.listParentEdges(node);
-		if (filter) {
-			edges = edges.filter((edge) => filter(edge.getParent()));
+		for (const edge of this.listParentEdges(node)) {
+			if (!filter || filter(edge.getParent())) {
+				edge.dispose();
+			}
 		}
-		edges.forEach((edge) => edge.dispose());
 		return this;
 	}
 
