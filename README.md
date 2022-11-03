@@ -5,8 +5,6 @@
 [![License](https://img.shields.io/badge/license-MIT-007ec6.svg)](https://github.com/donmccurdy/property-graph/blob/main/LICENSE)
 [![Build Status](https://github.com/donmccurdy/property-graph/workflows/build/badge.svg?branch=main&event=push)](https://github.com/donmccurdy/property-graph/actions?query=workflow%3Abuild)
 
-> **NOTE:** This package is experimental and still under active development.
-
 Extensible base for creating objects that behave like a Property Graph.
 
 ## Overview

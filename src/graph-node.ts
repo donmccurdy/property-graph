@@ -141,8 +141,7 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	 * Transfers this object's references from the old node to the new one. The old node is fully
 	 * detached from this parent at the end of the process.
 	 *
-	 * @hidden This method works imperfectly with Root, Scene, and Node properties, which may
-	 * already hold equivalent references to the replacement object.
+	 * @hidden
 	 */
 	public swap(old: GraphNode, replacement: GraphNode): this {
 		for (const attribute in this[$attributes]) {
