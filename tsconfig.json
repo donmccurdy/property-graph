@@ -1,10 +1,13 @@
 {
-	"include": ["src/**/*.ts"],
 	"compilerOptions": {
+		"paths": {
+			"property-graph": ["./"]
+		},
+		"module": "es2020",
+		"target": "es2020",
+		"lib": ["es2020"],
 		"moduleResolution": "node",
 		"esModuleInterop": true,
-		"lib": ["es6"],
-		"target": "es6",
 		"declaration": true,
 		"typeRoots": ["node_modules/@types"],
 		"strict": true
