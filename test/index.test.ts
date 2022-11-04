@@ -7,6 +7,8 @@ interface ITestNode {
 
 /**
  * Simple test implementation of GraphNode.
+ * TODO(cleanup): Figure out why TypeScript is no longer happy with the lines
+ * using 'never' below.
  */
 class TestNode extends GraphNode<ITestNode> {
 	propertyType = 'test';
@@ -14,16 +16,16 @@ class TestNode extends GraphNode<ITestNode> {
 		return { ...super.getDefaults(), nodes: [] };
 	}
 	addNode(node: TestNode): this {
-		return this.addRef('nodes', node);
+		return this.addRef('nodes', node as never);
 	}
 	addNodeWithLabel(node: TestNode, label: string): this {
-		return this.addRef('nodes', node, { label });
+		return this.addRef('nodes', node as never, { label });
 	}
 	removeNode(node: TestNode): this {
-		return this.removeRef('nodes', node);
+		return this.removeRef('nodes', node as never);
 	}
 	listNodes(): TestNode[] {
-		return this.listRefs('nodes');
+		return this.listRefs('nodes') as never;
 	}
 }
 
