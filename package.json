@@ -2,10 +2,16 @@
 	"name": "property-graph",
 	"version": "1.0.0",
 	"description": "Base for creating objects that behave like a Property Graph.",
+	"type": "module",
 	"sideEffects": false,
-	"main": "dist/property-graph.js",
-	"module": "dist/property-graph.modern.js",
-	"types": "dist/index.d.ts",
+	"source": "./src/index.ts",
+	"types": "./dist/index.d.ts",
+	"main": "./dist/property-graph.cjs",
+	"module": "./dist/property-graph.esm.js",
+	"exports": {
+		"require": "./dist/property-graph.cjs",
+		"default": "./dist/property-graph.modern.js"
+	},
 	"repository": "github:donmccurdy/property-graph",
 	"author": "Don McCurdy <dm@donmccurdy.com>",
 	"license": "MIT",
@@ -15,30 +21,27 @@
 		"node >= 14"
 	],
 	"scripts": {
-		"dist": "microbundle --format modern,cjs --define PACKAGE_VERSION=$npm_package_version",
-		"watch": "microbundle watch --format modern,cjs --define PACKAGE_VERSION=$npm_package_version",
-		"watch:debug": "microbundle watch --no-compress --format modern,cjs --define PACKAGE_VERSION=$npm_package_version",
-		"test": "ts-node node_modules/tape/bin/tape test/**/*.ts | tap-spec",
+		"dist": "microbundle --format cjs,esm,modern --no-compress --define PACKAGE_VERSION=$npm_package_version",
+		"watch": "microbundle watch --format cjs,esm,modern --no-compress --define PACKAGE_VERSION=$npm_package_version",
+		"test": "ava test/*.ts",
+		"coverage": "c8 --reporter=lcov --reporter=text ava test/*.ts --tap",
+		"coverage:report": "c8 report --reporter=text-lcov > coverage/coverage.lcov",
 		"lint": "eslint \"{src,test}/**/*.ts\"",
-		"coverage": "nyc --reporter=lcov --reporter=text ts-node node_modules/tape/bin/tape test/*.ts",
-		"coverage:report": "nyc report --reporter=text-lcov | coveralls",
 		"preversion": "yarn dist && yarn test",
-		"version": "yarn dist && git add -u",
+		"version": "rimraf dist/* && yarn dist && git add -u",
 		"postversion": "git push && git push --tags && npm publish && yarn coverage:report"
 	},
 	"devDependencies": {
-		"@types/tape": "4.13.2",
 		"@typescript-eslint/eslint-plugin": "5.42.0",
 		"@typescript-eslint/parser": "5.42.0",
+		"ava": "^5.0.1",
+		"c8": "^7.12.0",
 		"coveralls": "3.1.1",
 		"eslint": "8.26.0",
 		"eslint-config-prettier": "8.5.0",
 		"microbundle": "0.15.1",
-		"nyc": "15.1.0",
 		"prettier": "2.7.1",
-		"source-map-support": "0.5.21",
-		"tap-spec": "5.0.0",
-		"tape": "5.6.1",
+		"rimraf": "^3.0.2",
 		"ts-node": "10.9.1",
 		"typescript": "4.8.4"
 	},
@@ -49,5 +52,12 @@
 		"LICENSE",
 		"package.json"
 	],
-	"dependencies": {}
+	"ava": {
+		"extensions": {
+			"ts": "module"
+		},
+		"nodeArguments": [
+			"--loader=ts-node/esm"
+		]
+	}
 }

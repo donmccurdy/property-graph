@@ -1,7 +1,5 @@
-require('source-map-support').install();
-
-import test from 'tape';
-import { Graph, GraphNode, GraphEdge } from '../';
+import test from 'ava';
+import { Graph, GraphNode, GraphEdge } from 'property-graph';
 
 interface ITestNode {
 	nodes: TestNode[];
@@ -9,6 +7,8 @@ interface ITestNode {
 
 /**
  * Simple test implementation of GraphNode.
+ * TODO(cleanup): Figure out why TypeScript is no longer happy with the lines
+ * using 'never' below.
  */
 class TestNode extends GraphNode<ITestNode> {
 	propertyType = 'test';
@@ -16,24 +16,23 @@ class TestNode extends GraphNode<ITestNode> {
 		return { ...super.getDefaults(), nodes: [] };
 	}
 	addNode(node: TestNode): this {
-		return this.addRef('nodes', node);
+		return this.addRef('nodes', node as never);
 	}
 	addNodeWithLabel(node: TestNode, label: string): this {
-		return this.addRef('nodes', node, { label });
+		return this.addRef('nodes', node as never, { label });
 	}
 	removeNode(node: TestNode): this {
-		return this.removeRef('nodes', node);
+		return this.removeRef('nodes', node as never);
 	}
 	listNodes(): TestNode[] {
-		return this.listRefs('nodes');
+		return this.listRefs('nodes') as never;
 	}
 }
 
-test('property-graph::exports', (t: test.Test) => {
-	t.ok(Graph, 'implement Graph');
-	t.ok(GraphNode, 'implement GraphNode');
-	t.ok(GraphEdge, 'implement GraphEdge');
-	t.end();
+test('property-graph::exports', (t) => {
+	t.truthy(Graph, 'implement Graph');
+	t.truthy(GraphNode, 'implement GraphNode');
+	t.truthy(GraphEdge, 'implement GraphEdge');
 });
 
 test('property-graph::graph | edge management', (t) => {
@@ -73,8 +72,7 @@ test('property-graph::graph | edge management', (t) => {
 	root.addNode(b);
 	root.dispose();
 	t.deepEqual(root.listNodes(), [], 'Disposed the root, confirmed empty.');
-	t.equal(root.isDisposed(), true, 'Disposed the root, confirmed disposed.');
-	t.end();
+	t.true(root.isDisposed(), 'Disposed the root, confirmed disposed.');
 });
 
 test('property-graph::graph | prevents cross-graph edges', (t) => {
@@ -89,9 +87,8 @@ test('property-graph::graph | prevents cross-graph edges', (t) => {
 
 	rootA.addNode(nodeA);
 
-	t.throws(() => rootB.addNode(nodeA), 'prevents connecting node from another graph, used');
-	t.throws(() => rootA.addNode(nodeB), 'prevents connecting node from another graph, unused');
-	t.end();
+	t.throws(() => rootB.addNode(nodeA), undefined, 'prevents connecting node from another graph, used');
+	t.throws(() => rootA.addNode(nodeB), undefined, 'prevents connecting node from another graph, unused');
 });
 
 test('property-graph::graph | list connections', (t) => {
@@ -103,7 +100,7 @@ test('property-graph::graph | list connections', (t) => {
 	node1.addNode(node2);
 	root.addNode(node1);
 
-	t.equal(graph.listEdges().length, 2, 'listEdges()');
+	t.is(graph.listEdges().length, 2, 'listEdges()');
 	t.deepEqual(
 		graph.listParentEdges(node1).map((edge) => edge.getParent()),
 		[root],
@@ -124,7 +121,6 @@ test('property-graph::graph | list connections', (t) => {
 		[],
 		'listParentEdges(B)'
 	);
-	t.end();
 });
 
 test('property-graph::graph | dispose events', (t) => {
@@ -137,17 +133,16 @@ test('property-graph::graph | dispose events', (t) => {
 	graph.addEventListener('node:dispose', ({ target }) => disposed.push(target));
 
 	t.deepEqual(disposed, [], 'disposed: 0');
-	t.notOk(node1.isDisposed(), 'node1 active');
-	t.notOk(node2.isDisposed(), 'node2 active');
+	t.false(node1.isDisposed(), 'node1 active');
+	t.false(node2.isDisposed(), 'node2 active');
 
 	node2.dispose();
 	t.deepEqual(disposed, [node2], 'disposed: 1');
 
 	node1.dispose();
 	t.deepEqual(disposed, [node2, node1], 'disposed: 2');
-	t.ok(node1.isDisposed(), 'node1 disposed');
-	t.ok(node2.isDisposed(), 'node2 disposed');
-	t.end();
+	t.true(node1.isDisposed(), 'node1 disposed');
+	t.true(node2.isDisposed(), 'node2 disposed');
 });
 
 test('property-graph::graph-node | swap', (t) => {
@@ -157,13 +152,13 @@ test('property-graph::graph-node | swap', (t) => {
 	const b = new TestNode(graph);
 
 	root.addNode(a);
-	t.deepEquals(root.listNodes(), [a], 'adds A');
+	t.deepEqual(root.listNodes(), [a], 'adds A');
 	t.deepEqual(graph.listChildren(root), [a], 'consistent graph state, parentRefs');
 	t.deepEqual(graph.listParents(a), [root], 'consistent graph state, childRefs (1/2)');
 	t.deepEqual(graph.listParents(b), [], 'consistent graph state, childRefs (2/2)');
 
 	root.swap(a, b);
-	t.deepEquals(root.listNodes(), [b], 'swaps A -> B');
+	t.deepEqual(root.listNodes(), [b], 'swaps A -> B');
 	t.deepEqual(graph.listChildren(root), [b], 'consistent graph state, parentRefs');
 	t.deepEqual(graph.listParents(a), [], 'consistent graph state, childRefs (1/2)');
 	t.deepEqual(graph.listParents(b), [root], 'consistent graph state, childRefs (2/2)');
@@ -172,9 +167,8 @@ test('property-graph::graph-node | swap', (t) => {
 
 	root.removeNode(b);
 	root.addNodeWithLabel(a, 'custom-label');
-	t.deepEquals(listLabels(graph.listParentEdges(a)), [{ label: 'custom-label' }], 'initial attributes');
+	t.deepEqual(listLabels(graph.listParentEdges(a)), [{ label: 'custom-label' }], 'initial attributes');
 	root.swap(a, b);
-	t.deepEquals(listLabels(graph.listParentEdges(a)), [], 'removed old edge');
-	t.deepEquals(listLabels(graph.listParentEdges(b)), [{ label: 'custom-label' }], 'persist attributes');
-	t.end();
+	t.deepEqual(listLabels(graph.listParentEdges(a)), [], 'removed old edge');
+	t.deepEqual(listLabels(graph.listParentEdges(b)), [{ label: 'custom-label' }], 'persist attributes');
 });
