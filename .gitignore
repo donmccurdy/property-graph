@@ -1,2 +1,8 @@
-dist
+# dependencies
 node_modules
+
+# builds
+dist
+
+# coverage
+coverage
