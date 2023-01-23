@@ -1,31 +1,35 @@
 import test from 'ava';
 import { Graph, GraphNode, GraphEdge } from 'property-graph';
 
-interface ITestNode {
-	nodes: TestNode[];
+interface IPerson {
+	name: string;
+	age: number;
+	friends: Person[];
 }
 
-/**
- * Simple test implementation of GraphNode.
- * TODO(cleanup): Figure out why TypeScript is no longer happy with the lines
- * using 'never' below.
- */
-class TestNode extends GraphNode<ITestNode> {
-	propertyType = 'test';
-	getDefaults(): ITestNode {
-		return { ...super.getDefaults(), nodes: [] };
+/** Simple test implementation of GraphNode. */
+class Person extends GraphNode<IPerson> {
+	propertyType = 'person';
+	getDefaults(): IPerson {
+		return { ...super.getDefaults(), name: '', age: 0, friends: [] };
 	}
-	addNode(node: TestNode): this {
-		return this.addRef('nodes', node as never);
+	addFriend(friend: Person): this {
+		return this.addRef('friends', friend);
 	}
-	addNodeWithLabel(node: TestNode, label: string): this {
-		return this.addRef('nodes', node as never, { label });
+	addFriendWithLabel(friend: Person, label: string): this {
+		return this.addRef('friends', friend, { label });
 	}
-	removeNode(node: TestNode): this {
-		return this.removeRef('nodes', node as never);
+	removeFriend(friend: Person): this {
+		return this.removeRef('friends', friend);
 	}
-	listNodes(): TestNode[] {
-		return this.listRefs('nodes') as never;
+	listFriends(): Person[] {
+		return this.listRefs('friends');
+	}
+	getName(): string {
+		return this.get('name');
+	}
+	setName(name: string): this {
+		return this.set('name', name);
 	}
 }
 
@@ -37,41 +41,41 @@ test('property-graph::exports', (t) => {
 
 test('property-graph::graph | edge management', (t) => {
 	const graph = new Graph();
-	const root = new TestNode(graph);
-	const a = new TestNode(graph);
-	const b = new TestNode(graph);
+	const root = new Person(graph);
+	const a = new Person(graph);
+	const b = new Person(graph);
 
-	root.addNode(a).addNode(b);
-	a.addNode(b);
-	t.deepEqual(root.listNodes(), [a, b], 'Added two nodes.');
-	t.deepEqual(a.listNodes(), [b], 'Added a child');
+	root.addFriend(a).addFriend(b);
+	a.addFriend(b);
+	t.deepEqual(root.listFriends(), [a, b], 'Added two nodes.');
+	t.deepEqual(a.listFriends(), [b], 'Added a child');
 
-	root.removeNode(a);
-	t.deepEqual(root.listNodes(), [b], 'Removed a node.');
+	root.removeFriend(a);
+	t.deepEqual(root.listFriends(), [b], 'Removed a node.');
 
 	b.dispose();
-	t.deepEqual(root.listNodes(), [], 'Disposed a node.');
+	t.deepEqual(root.listFriends(), [], 'Disposed a node.');
 
 	// Subjective behavior, but might as well unit test it.
-	root.addNode(a).addNode(b).addNode(b).addNode(b);
-	t.deepEqual(root.listNodes(), [a, b, b, b], 'Added duplicate nodes.');
-	root.removeNode(b);
-	t.deepEqual(root.listNodes(), [a], 'Removed a duplicate node.');
-	root.removeNode(b).removeNode(b).removeNode(b);
-	t.deepEqual(root.listNodes(), [a], 'Removed a non-present node repeatedly.');
+	root.addFriend(a).addFriend(b).addFriend(b).addFriend(b);
+	t.deepEqual(root.listFriends(), [a, b, b, b], 'Added duplicate nodes.');
+	root.removeFriend(b);
+	t.deepEqual(root.listFriends(), [a], 'Removed a duplicate node.');
+	root.removeFriend(b).removeFriend(b).removeFriend(b);
+	t.deepEqual(root.listFriends(), [a], 'Removed a non-present node repeatedly.');
 
 	// Detach.
 	a.detach();
-	t.deepEqual(root.listNodes(), [], 'Detached a node.');
+	t.deepEqual(root.listFriends(), [], 'Detached a node.');
 
 	// Dispose.
-	root.addNode(a);
+	root.addFriend(a);
 	a.dispose();
-	t.deepEqual(root.listNodes(), [], 'Disposed a node.');
+	t.deepEqual(root.listFriends(), [], 'Disposed a node.');
 
-	root.addNode(b);
+	root.addFriend(b);
 	root.dispose();
-	t.deepEqual(root.listNodes(), [], 'Disposed the root, confirmed empty.');
+	t.deepEqual(root.listFriends(), [], 'Disposed the root, confirmed empty.');
 	t.true(root.isDisposed(), 'Disposed the root, confirmed disposed.');
 });
 
@@ -79,26 +83,26 @@ test('property-graph::graph | prevents cross-graph edges', (t) => {
 	const graphA = new Graph();
 	const graphB = new Graph();
 
-	const rootA = new TestNode(graphA);
-	const rootB = new TestNode(graphB);
+	const rootA = new Person(graphA);
+	const rootB = new Person(graphB);
 
-	const nodeA = new TestNode(graphA);
-	const nodeB = new TestNode(graphB);
+	const nodeA = new Person(graphA);
+	const nodeB = new Person(graphB);
 
-	rootA.addNode(nodeA);
+	rootA.addFriend(nodeA);
 
-	t.throws(() => rootB.addNode(nodeA), undefined, 'prevents connecting node from another graph, used');
-	t.throws(() => rootA.addNode(nodeB), undefined, 'prevents connecting node from another graph, unused');
+	t.throws(() => rootB.addFriend(nodeA), undefined, 'prevents connecting node from another graph, used');
+	t.throws(() => rootA.addFriend(nodeB), undefined, 'prevents connecting node from another graph, unused');
 });
 
 test('property-graph::graph | list connections', (t) => {
 	const graph = new Graph();
-	const root = new TestNode(graph);
-	const node1 = new TestNode(graph);
-	const node2 = new TestNode(graph);
+	const root = new Person(graph);
+	const node1 = new Person(graph);
+	const node2 = new Person(graph);
 
-	node1.addNode(node2);
-	root.addNode(node1);
+	node1.addFriend(node2);
+	root.addFriend(node1);
 
 	t.is(graph.listEdges().length, 2, 'listEdges()');
 	t.deepEqual(
@@ -125,8 +129,8 @@ test('property-graph::graph | list connections', (t) => {
 
 test('property-graph::graph | dispose events', (t) => {
 	const graph = new Graph();
-	const node1 = new TestNode(graph);
-	const node2 = new TestNode(graph);
+	const node1 = new Person(graph);
+	const node2 = new Person(graph);
 
 	const disposed = [] as unknown[];
 
@@ -147,26 +151,26 @@ test('property-graph::graph | dispose events', (t) => {
 
 test('property-graph::graph-node | swap', (t) => {
 	const graph = new Graph();
-	const root = new TestNode(graph);
-	const a = new TestNode(graph);
-	const b = new TestNode(graph);
+	const root = new Person(graph);
+	const a = new Person(graph);
+	const b = new Person(graph);
 
-	root.addNode(a);
-	t.deepEqual(root.listNodes(), [a], 'adds A');
+	root.addFriend(a);
+	t.deepEqual(root.listFriends(), [a], 'adds A');
 	t.deepEqual(graph.listChildren(root), [a], 'consistent graph state, parentRefs');
 	t.deepEqual(graph.listParents(a), [root], 'consistent graph state, childRefs (1/2)');
 	t.deepEqual(graph.listParents(b), [], 'consistent graph state, childRefs (2/2)');
 
 	root.swap(a, b);
-	t.deepEqual(root.listNodes(), [b], 'swaps A -> B');
+	t.deepEqual(root.listFriends(), [b], 'swaps A -> B');
 	t.deepEqual(graph.listChildren(root), [b], 'consistent graph state, parentRefs');
 	t.deepEqual(graph.listParents(a), [], 'consistent graph state, childRefs (1/2)');
 	t.deepEqual(graph.listParents(b), [root], 'consistent graph state, childRefs (2/2)');
 
 	const listLabels = (edges: GraphEdge<GraphNode, GraphNode>[]) => edges.map((edge) => edge.getAttributes());
 
-	root.removeNode(b);
-	root.addNodeWithLabel(a, 'custom-label');
+	root.removeFriend(b);
+	root.addFriendWithLabel(a, 'custom-label');
 	t.deepEqual(listLabels(graph.listParentEdges(a)), [{ label: 'custom-label' }], 'initial attributes');
 	root.swap(a, b);
 	t.deepEqual(listLabels(graph.listParentEdges(a)), [], 'removed old edge');
