@@ -9,6 +9,7 @@
 	"main": "./dist/property-graph.cjs",
 	"module": "./dist/property-graph.esm.js",
 	"exports": {
+		"types": "./dist/index.d.ts",
 		"require": "./dist/property-graph.cjs",
 		"default": "./dist/property-graph.modern.js"
 	},
