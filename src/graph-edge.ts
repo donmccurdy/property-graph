@@ -1,5 +1,5 @@
-import { EventDispatcher, GraphEdgeEvent } from './event-dispatcher';
-import { GraphNode } from './graph-node';
+import { EventDispatcher, GraphEdgeEvent } from './event-dispatcher.js';
+import { GraphNode } from './graph-node.js';
 
 /**
  * Represents a connection between two {@link GraphNode} resources in a {@link Graph}.

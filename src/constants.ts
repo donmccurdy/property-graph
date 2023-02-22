@@ -1,5 +1,5 @@
-import type { GraphEdge } from './graph-edge';
-import type { GraphNode } from './graph-node';
+import type { GraphEdge } from './graph-edge.js';
+import type { GraphNode } from './graph-node.js';
 
 /** TypeScript utility for nullable types. */
 export type Nullable<T> = { [P in keyof T]: T[P] | null };

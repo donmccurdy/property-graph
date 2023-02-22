@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-types */
-import { GraphNodeEvent } from '.';
-import { LiteralKeys, Nullable, Ref, RefMap, RefKeys, RefListKeys, RefMapKeys } from './constants';
-import { BaseEvent, EventDispatcher } from './event-dispatcher';
-import { Graph } from './graph';
-import { GraphEdge } from './graph-edge';
-import { isRef, isRefList, isRefMap } from './utils';
+import { LiteralKeys, Nullable, Ref, RefMap, RefKeys, RefListKeys, RefMapKeys } from './constants.js';
+import { BaseEvent, EventDispatcher, GraphNodeEvent } from './event-dispatcher.js';
+import { Graph } from './graph.js';
+import { GraphEdge } from './graph-edge.js';
+import { isRef, isRefList, isRefMap } from './utils.js';
 
 // References:
 // - https://stackoverflow.com/a/70163679/1314762

@@ -1,5 +1,5 @@
-import type { Ref, RefMap } from './constants';
-import { GraphEdge } from './graph-edge';
+import type { Ref, RefMap } from './constants.js';
+import { GraphEdge } from './graph-edge.js';
 
 export function isRef(value: Ref | unknown): boolean {
 	return value instanceof GraphEdge;
