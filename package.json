@@ -42,7 +42,7 @@
 		"eslint-config-prettier": "8.8.0",
 		"microbundle": "0.15.1",
 		"prettier": "2.8.7",
-		"rimraf": "^4.1.2",
+		"rimraf": "^5.0.0",
 		"ts-node": "10.9.1",
 		"typescript": "5.0.4"
 	},
