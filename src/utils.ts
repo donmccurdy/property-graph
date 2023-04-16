@@ -10,5 +10,15 @@ export function isRefList(value: Ref[] | unknown): boolean {
 }
 
 export function isRefMap(value: RefMap | unknown): boolean {
-	return !!(value && typeof value === 'object' && Object.values(value)[0] instanceof GraphEdge);
+	return !!(isPlainObject(value) && getFirstValue(value) instanceof GraphEdge);
+}
+
+function getFirstValue(value: Record<string, unknown>): unknown {
+	for (const key in value) {
+		return value[key];
+	}
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+	return Boolean(value) && Object.getPrototypeOf(value) === Object.prototype;
 }
