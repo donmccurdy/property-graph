@@ -242,9 +242,10 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 		refs.push(ref);
 
 		ref.addEventListener('dispose', () => {
-			const retained = refs.filter((l) => l !== ref);
-			refs.length = 0;
-			for (const retainedRef of retained) refs.push(retainedRef);
+			let index;
+			while ((index = refs.indexOf(ref)) !== -1) {
+				refs.splice(index, 1);
+			}
 			this.dispatchEvent({ type: 'change', attribute });
 		});
 
