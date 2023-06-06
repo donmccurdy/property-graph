@@ -25,8 +25,6 @@ export const $immutableKeys = Symbol('immutableKeys');
 
 /**
  * Represents a node in a {@link Graph}.
- *
- * @category Graph
  */
 export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatcher<GraphNodeEvent> {
 	private _disposed = false;
@@ -317,6 +315,10 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	 * Events.
 	 */
 
+	/**
+	 * Dispatches an event on the {@link GraphNode}, and on the associated
+	 * {@link Graph}. Event types on the graph are prefixed, `"node:[type]"`.
+	 */
 	dispatchEvent(event: BaseEvent): this {
 		super.dispatchEvent({ ...event, target: this });
 		this.graph.dispatchEvent({ ...event, target: this, type: `node:${event.type}` });

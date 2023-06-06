@@ -5,8 +5,6 @@ import { GraphNode } from './graph-node.js';
 /**
  * A graph manages a network of {@link GraphNode} nodes, connected
  * by {@link @Link} edges.
- *
- * @category Graph
  */
 export class Graph<T extends GraphNode> extends EventDispatcher<GraphEvent | GraphNodeEvent | GraphEdgeEvent> {
 	private _emptySet: Set<GraphEdge<T, T>> = new Set();
@@ -68,6 +66,7 @@ export class Graph<T extends GraphNode> extends EventDispatcher<GraphEvent | Gra
 	 * Internal.
 	 */
 
+	/** @hidden */
 	private _registerEdge(edge: GraphEdge<T, T>): GraphEdge<T, T> {
 		this._edges.add(edge);
 

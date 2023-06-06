@@ -8,8 +8,6 @@ import { GraphNode } from './graph-node.js';
  * owner is responsible for being able find and remove a reference to a resource, given
  * that link. The resource does not hold a reference to the link or to the owner,
  * although that reverse lookup can be done on the graph.
- *
- * @category Graph
  */
 export class GraphEdge<Parent extends GraphNode, Child extends GraphNode> extends EventDispatcher<GraphEdgeEvent> {
 	private _disposed = false;
