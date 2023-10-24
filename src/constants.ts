@@ -25,10 +25,10 @@ export type RefListKeys<T> = { [K in keyof T]-?: T[K] extends RefList ? K : neve
 export type RefSetKeys<T> = { [K in keyof T]-?: T[K] extends RefSet ? K : never }[keyof T];
 export type RefMapKeys<T> = { [K in keyof T]-?: T[K] extends RefMap ? K : never }[keyof T];
 
-// TODO(v1): Remove legacy types.
+// TODO(v2): Remove legacy types.
 export type LegacyRefListKeys<T> = { [K in keyof T]-?: T[K] extends GraphNode[] ? K : never }[keyof T];
 export type LegacyRefMapKeys<T> = { [K in keyof T]-?: T[K] extends { [key: string]: GraphNode } ? K : never }[keyof T];
 
-// TODO(v1): Remove legacy types.
+// TODO(v2): Remove legacy types.
 // export type AnyRefOrderedCollectionKeys<T> = RefListKeys<T> | RefSetKeys<T> | LegacyRefListKeys<T>;
 // export type AnyRefMapKeys<T> = RefMapKeys<T> | LegacyRefMapKeys<T>;
