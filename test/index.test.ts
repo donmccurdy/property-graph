@@ -5,7 +5,6 @@ interface IPerson {
 	name: string;
 	age: number;
 	friends: RefSet<Person>;
-	relatives: RefSet<Person>;
 	coffeePlans: RefList<Person>;
 }
 
@@ -18,7 +17,6 @@ class Person extends GraphNode<IPerson> {
 			name: '',
 			age: 0,
 			friends: new RefSet(),
-			relatives: new RefSet(),
 			coffeePlans: new RefList(),
 		};
 	}
@@ -33,15 +31,6 @@ class Person extends GraphNode<IPerson> {
 	}
 	listFriends(): Person[] {
 		return this.listRefs('friends');
-	}
-	addRelative(person: Person): this {
-		return this.addRef('relatives', person);
-	}
-	removeRelative(person: Person): this {
-		return this.removeRef('relatives', person);
-	}
-	listRelatives(): Person[] {
-		return this.listRefs('relatives');
 	}
 	addCoffeePlan(person: Person): this {
 		return this.addRef('coffeePlans', person);
