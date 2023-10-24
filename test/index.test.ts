@@ -1,29 +1,56 @@
 import test from 'ava';
-import { Graph, GraphNode, GraphEdge } from 'property-graph';
+import { Graph, GraphNode, GraphEdge, RefSet, RefList } from 'property-graph';
 
 interface IPerson {
 	name: string;
 	age: number;
-	friends: Person[];
+	friends: RefSet<Person>;
+	relatives: RefSet<Person>;
+	coffeePlans: RefList<Person>;
 }
 
 /** Simple test implementation of GraphNode. */
 class Person extends GraphNode<IPerson> {
 	propertyType = 'person';
 	getDefaults(): IPerson {
-		return { ...super.getDefaults(), name: '', age: 0, friends: [] };
+		return {
+			...super.getDefaults(),
+			name: '',
+			age: 0,
+			friends: new RefSet(),
+			relatives: new RefSet(),
+			coffeePlans: new RefList(),
+		};
 	}
-	addFriend(friend: Person): this {
-		return this.addRef('friends', friend);
+	addFriend(person: Person): this {
+		return this.addRef('friends', person);
 	}
-	addFriendWithLabel(friend: Person, label: string): this {
-		return this.addRef('friends', friend, { label });
+	addFriendWithLabel(person: Person, label: string): this {
+		return this.addRef('friends', person, { label });
 	}
-	removeFriend(friend: Person): this {
-		return this.removeRef('friends', friend);
+	removeFriend(person: Person): this {
+		return this.removeRef('friends', person);
 	}
 	listFriends(): Person[] {
 		return this.listRefs('friends');
+	}
+	addRelative(person: Person): this {
+		return this.addRef('relatives', person);
+	}
+	removeRelative(person: Person): this {
+		return this.removeRef('relatives', person);
+	}
+	listRelatives(): Person[] {
+		return this.listRefs('relatives');
+	}
+	addCoffeePlan(person: Person): this {
+		return this.addRef('coffeePlans', person);
+	}
+	removeCoffeePlan(person: Person): this {
+		return this.removeRef('coffeePlans', person);
+	}
+	listCoffeePlans() {
+		return this.listRefs('coffeePlans');
 	}
 	getName(): string {
 		return this.get('name');
@@ -56,13 +83,21 @@ test('property-graph::graph | edge management', (t) => {
 	b.dispose();
 	t.deepEqual(root.listFriends(), [], 'Disposed a node.');
 
-	// Subjective behavior, but might as well unit test it.
+	// No duplicates!
 	root.addFriend(a).addFriend(b).addFriend(b).addFriend(b);
-	t.deepEqual(root.listFriends(), [a, b, b, b], 'Added duplicate nodes.');
+	t.deepEqual(root.listFriends(), [a, b], 'Added duplicate nodes.');
 	root.removeFriend(b);
 	t.deepEqual(root.listFriends(), [a], 'Removed a duplicate node.');
 	root.removeFriend(b).removeFriend(b).removeFriend(b);
 	t.deepEqual(root.listFriends(), [a], 'Removed a non-present node repeatedly.');
+
+	// Duplicates allowed.
+	root.addCoffeePlan(a).addCoffeePlan(b).addCoffeePlan(b).addCoffeePlan(b);
+	t.deepEqual(root.listCoffeePlans(), [a, b, b, b], 'Added duplicate nodes.');
+	root.removeCoffeePlan(b);
+	t.deepEqual(root.listCoffeePlans(), [a], 'Removed a duplicate node.');
+	root.removeCoffeePlan(b).removeCoffeePlan(b).removeCoffeePlan(b);
+	t.deepEqual(root.listCoffeePlans(), [a], 'Removed a non-present node repeatedly.');
 
 	// Detach.
 	a.detach();
@@ -108,22 +143,22 @@ test('property-graph::graph | list connections', (t) => {
 	t.deepEqual(
 		graph.listParentEdges(node1).map((edge) => edge.getParent()),
 		[root],
-		'listParentEdges(A)'
+		'listParentEdges(A)',
 	);
 	t.deepEqual(
 		graph.listChildEdges(node1).map((edge) => edge.getChild()),
 		[node2],
-		'listChildEdges(A)'
+		'listChildEdges(A)',
 	);
 	t.deepEqual(
 		graph.listParentEdges(node2).map((edge) => edge.getParent()),
 		[node1],
-		'listParentEdges(B)'
+		'listParentEdges(B)',
 	);
 	t.deepEqual(
 		graph.listChildEdges(node2).map((edge) => edge.getChild()),
 		[],
-		'listParentEdges(B)'
+		'listParentEdges(B)',
 	);
 });
 
