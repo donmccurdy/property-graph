@@ -153,8 +153,8 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	 */
 	public swap(prevValue: GraphNode, nextValue: GraphNode): this {
 		for (const attribute in this[$attributes]) {
-			const value = this[$attributes][attribute] as Ref | Ref[] | RefMap;
-			if (value instanceof Ref) {
+			const value = this[$attributes][attribute] as Ref | RefList | RefSet | RefMap;
+			if (value instanceof GraphEdge) {
 				const ref = value as Ref;
 				if (ref.getChild() === prevValue) {
 					this.setRef(attribute as any, nextValue, ref.getAttributes());

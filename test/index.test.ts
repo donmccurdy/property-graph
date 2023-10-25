@@ -1,9 +1,10 @@
 import test from 'ava';
-import { Graph, GraphNode, GraphEdge, RefSet, RefList, RefMap, Ref } from 'property-graph';
+import { Graph, GraphNode, GraphEdge, RefSet, RefList, RefMap, Nullable } from 'property-graph';
 
 interface IPerson {
 	name: string;
 	age: number;
+	partner: Person;
 	friends: RefSet<Person>;
 	recentCalls: RefList<Person>;
 	relatives: RefMap<Person>;
@@ -12,11 +13,12 @@ interface IPerson {
 /** Simple test implementation of GraphNode. */
 class Person extends GraphNode<IPerson> {
 	propertyType = 'person';
-	getDefaults(): IPerson {
+	getDefaults(): Nullable<IPerson> {
 		return {
 			...super.getDefaults(),
 			name: '',
 			age: 0,
+			partner: null,
 			friends: new RefSet(),
 			recentCalls: new RefList(),
 			relatives: new RefMap(),
@@ -25,25 +27,31 @@ class Person extends GraphNode<IPerson> {
 	getName(): string {
 		return this.get('name');
 	}
-	setName(name: string): this {
+	setName(name: string) {
 		return this.set('name', name);
 	}
-	addFriend(person: Person): this {
+	getPartner(): Person | null {
+		return this.getRef('partner');
+	}
+	setPartner(person: Person | null): this {
+		return this.setRef('partner', person);
+	}
+	addFriend(person: Person) {
 		return this.addRef('friends', person);
 	}
-	addFriendWithLabel(person: Person, label: string): this {
+	addFriendWithLabel(person: Person, label: string) {
 		return this.addRef('friends', person, { label });
 	}
-	removeFriend(person: Person): this {
+	removeFriend(person: Person) {
 		return this.removeRef('friends', person);
 	}
 	listFriends(): Person[] {
 		return this.listRefs('friends');
 	}
-	addRecentCall(person: Person): this {
+	addRecentCall(person: Person) {
 		return this.addRef('recentCalls', person);
 	}
-	removeRecentCall(person: Person): this {
+	removeRecentCall(person: Person) {
 		return this.removeRef('recentCalls', person);
 	}
 	listRecentCalls() {
@@ -61,7 +69,6 @@ test('property-graph::exports', (t) => {
 	t.truthy(Graph, 'implement Graph');
 	t.truthy(GraphNode, 'implement GraphNode');
 	t.truthy(GraphEdge, 'implement GraphEdge');
-	t.truthy(Ref, 'implement Ref');
 	t.truthy(RefList, 'implement RefList');
 	t.truthy(RefSet, 'implement RefSet');
 	t.truthy(RefMap, 'implement RefMap');

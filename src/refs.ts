@@ -1,7 +1,6 @@
 import { GraphEdge } from './graph-edge.js';
 import { GraphNode } from './graph-node.js';
 
-export const Ref = GraphEdge;
 export type Ref<T extends GraphNode = GraphNode> = GraphEdge<GraphNode, T>;
 
 /**
@@ -116,5 +115,3 @@ export class RefMap<T extends GraphNode = GraphNode> {
 		return Object.values(this.map);
 	}
 }
-
-export type UnknownRef = Ref | RefList | RefSet | RefMap | unknown;
