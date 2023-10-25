@@ -14,7 +14,6 @@ import { BaseEvent, EventDispatcher, GraphNodeEvent } from './event-dispatcher.j
 import { Graph } from './graph.js';
 import { GraphEdge } from './graph-edge.js';
 import { Ref, RefList, RefMap, RefSet } from './refs.js';
-import { isPlainObject } from './utils.js';
 
 // References:
 // - https://stackoverflow.com/a/70163679/1314762
@@ -291,12 +290,10 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 
 		if (list instanceof RefList || list instanceof RefSet) {
 			return list;
-		} else if (Array.isArray(list)) {
-			const refs = new RefList(list as Ref[]);
-			return ((this[$attributes][attribute] as RefList) = refs);
 		}
 
-		throw new Error(`Unexpected value for "${attribute as string}"`);
+		// TODO(v3) Remove warning.
+		throw new Error(`Expected RefList or RefSet for attribute "${attribute as string}"`);
 	}
 
 	/**********************************************************************************************
@@ -357,13 +354,11 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 		const map = this[$attributes][attribute];
 
 		if (map instanceof RefMap) {
-			return map as RefMap;
-		} else if (isPlainObject(map)) {
-			const refMap = new RefMap(map as any);
-			return ((this[$attributes][attribute] as RefMap) = refMap);
+			return map;
 		}
 
-		throw new Error(`Unexpected value for "${attribute as string}"`);
+		// TODO(v3) Remove warning.
+		throw new Error(`Expected RefMap for attribute "${attribute as string}"`);
 	}
 
 	/**********************************************************************************************

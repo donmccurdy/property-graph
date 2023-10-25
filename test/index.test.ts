@@ -1,11 +1,12 @@
 import test from 'ava';
-import { Graph, GraphNode, GraphEdge, RefSet, RefList } from 'property-graph';
+import { Graph, GraphNode, GraphEdge, RefSet, RefList, RefMap, Ref } from 'property-graph';
 
 interface IPerson {
 	name: string;
 	age: number;
 	friends: RefSet<Person>;
 	recentCalls: RefList<Person>;
+	relatives: RefMap<Person>;
 }
 
 /** Simple test implementation of GraphNode. */
@@ -18,7 +19,14 @@ class Person extends GraphNode<IPerson> {
 			age: 0,
 			friends: new RefSet(),
 			recentCalls: new RefList(),
+			relatives: new RefMap(),
 		};
+	}
+	getName(): string {
+		return this.get('name');
+	}
+	setName(name: string): this {
+		return this.set('name', name);
 	}
 	addFriend(person: Person): this {
 		return this.addRef('friends', person);
@@ -41,11 +49,11 @@ class Person extends GraphNode<IPerson> {
 	listRecentCalls() {
 		return this.listRefs('recentCalls');
 	}
-	getName(): string {
-		return this.get('name');
+	listRelatives() {
+		return this.listRefMapValues('relatives');
 	}
-	setName(name: string): this {
-		return this.set('name', name);
+	setRelative(relation: string, person: Person) {
+		return this.setRefMap('relatives', relation, person);
 	}
 }
 
@@ -53,13 +61,17 @@ test('property-graph::exports', (t) => {
 	t.truthy(Graph, 'implement Graph');
 	t.truthy(GraphNode, 'implement GraphNode');
 	t.truthy(GraphEdge, 'implement GraphEdge');
+	t.truthy(Ref, 'implement Ref');
+	t.truthy(RefList, 'implement RefList');
+	t.truthy(RefSet, 'implement RefSet');
+	t.truthy(RefMap, 'implement RefMap');
 });
 
 test('property-graph::graph | edge management', (t) => {
 	const graph = new Graph();
-	const root = new Person(graph);
-	const a = new Person(graph);
-	const b = new Person(graph);
+	const root = new Person(graph).setName('Root');
+	const a = new Person(graph).setName('A');
+	const b = new Person(graph).setName('B');
 
 	root.addFriend(a).addFriend(b);
 	a.addFriend(b);
@@ -88,9 +100,18 @@ test('property-graph::graph | edge management', (t) => {
 	root.removeRecentCall(b).removeRecentCall(b).removeRecentCall(b);
 	t.deepEqual(root.listRecentCalls(), [a], 'Removed a non-present node repeatedly.');
 
+	root.setRelative('child', a).setRelative('nephew', b);
+	a.setRelative('parent', root).setRelative('cousin', b);
+	b.setRelative('parent', root).setRelative('cousin', a);
+	t.deepEqual(root.listRelatives(), [a, b], 'root.listRelatives()');
+	t.deepEqual(a.listRelatives(), [root, b], 'a.listRelatives()');
+	t.deepEqual(b.listRelatives(), [root, a], 'b.listRelatives()');
+
 	// Detach.
 	a.detach();
-	t.deepEqual(root.listFriends(), [], 'Detached a node.');
+	t.deepEqual(root.listFriends(), [], 'Detached friends.');
+	t.deepEqual(root.listRecentCalls(), [], 'Detached recent calls.');
+	t.deepEqual(root.listRelatives(), [b], 'Detached relatives.');
 
 	// Dispose.
 	root.addFriend(a);
