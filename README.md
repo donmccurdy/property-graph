@@ -31,10 +31,12 @@ In a codebase with many distinct types of entities and relationships among them 
 **Definitions:**
 
 ```typescript
+import { GraphNode, RefSet } from 'property-graph';
+
 interface IPerson {
   name: string;
   age: number;
-  friends: Person[];
+  friends: RefSet<Person>;
   pet: Pet;
 }
 
@@ -45,7 +47,7 @@ interface IPet {
 
 class Person extends GraphNode<IPerson> {
 	getDefaults(): Nullable<IPerson> {
-		return {name: '', age: 0, friends: [], pet: null};
+		return {name: '', age: 0, friends: new RefSet(), pet: null};
 	}
 }
 class Pet extends GraphNode<IPet> {
