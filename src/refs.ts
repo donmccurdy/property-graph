@@ -4,6 +4,11 @@ import { GraphNode } from './graph-node.js';
 export const Ref = GraphEdge;
 export type Ref<T extends GraphNode = GraphNode> = GraphEdge<GraphNode, T>;
 
+/**
+ * An ordered collection of {@link Ref Refs}, allowing duplicates. Removing
+ * a Ref is an O(n) operation — use {@link RefSet} for faster removal, if
+ * duplicates are not required.
+ */
 export class RefList<T extends GraphNode = GraphNode> {
 	list: Ref<T>[] = [];
 	constructor(refs?: Ref<T>[]) {
@@ -46,6 +51,11 @@ export class RefList<T extends GraphNode = GraphNode> {
 	}
 }
 
+/**
+ * An ordered collection of {@link Ref Refs}, without duplicates. Adding or
+ * removing a Ref is typically O(1) or O(log(n)), and faster than
+ * {@link RefList}. If support for duplicates is required, use {@link RefList}.
+ */
 export class RefSet<T extends GraphNode = GraphNode> {
 	set = new Set<Ref<T>>();
 	map = new Map<T, Ref<T>>();
@@ -80,6 +90,9 @@ export class RefSet<T extends GraphNode = GraphNode> {
 	}
 }
 
+/**
+ * Map (or dictionary) from string keys to {@link Ref Refs}.
+ */
 export class RefMap<T extends GraphNode = GraphNode> {
 	map: { [key: string]: Ref<T> } = {};
 	constructor(map?: Record<string, Ref<T>>) {
