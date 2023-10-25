@@ -5,7 +5,7 @@ interface IPerson {
 	name: string;
 	age: number;
 	friends: RefSet<Person>;
-	coffeePlans: RefList<Person>;
+	recentCalls: RefList<Person>;
 }
 
 /** Simple test implementation of GraphNode. */
@@ -17,7 +17,7 @@ class Person extends GraphNode<IPerson> {
 			name: '',
 			age: 0,
 			friends: new RefSet(),
-			coffeePlans: new RefList(),
+			recentCalls: new RefList(),
 		};
 	}
 	addFriend(person: Person): this {
@@ -32,14 +32,14 @@ class Person extends GraphNode<IPerson> {
 	listFriends(): Person[] {
 		return this.listRefs('friends');
 	}
-	addCoffeePlan(person: Person): this {
-		return this.addRef('coffeePlans', person);
+	addRecentCall(person: Person): this {
+		return this.addRef('recentCalls', person);
 	}
-	removeCoffeePlan(person: Person): this {
-		return this.removeRef('coffeePlans', person);
+	removeRecentCall(person: Person): this {
+		return this.removeRef('recentCalls', person);
 	}
-	listCoffeePlans() {
-		return this.listRefs('coffeePlans');
+	listRecentCalls() {
+		return this.listRefs('recentCalls');
 	}
 	getName(): string {
 		return this.get('name');
@@ -81,12 +81,12 @@ test('property-graph::graph | edge management', (t) => {
 	t.deepEqual(root.listFriends(), [a], 'Removed a non-present node repeatedly.');
 
 	// Duplicates allowed.
-	root.addCoffeePlan(a).addCoffeePlan(b).addCoffeePlan(b).addCoffeePlan(b);
-	t.deepEqual(root.listCoffeePlans(), [a, b, b, b], 'Added duplicate nodes.');
-	root.removeCoffeePlan(b);
-	t.deepEqual(root.listCoffeePlans(), [a], 'Removed a duplicate node.');
-	root.removeCoffeePlan(b).removeCoffeePlan(b).removeCoffeePlan(b);
-	t.deepEqual(root.listCoffeePlans(), [a], 'Removed a non-present node repeatedly.');
+	root.addRecentCall(a).addRecentCall(b).addRecentCall(b).addRecentCall(b);
+	t.deepEqual(root.listRecentCalls(), [a, b, b, b], 'Added duplicate nodes.');
+	root.removeRecentCall(b);
+	t.deepEqual(root.listRecentCalls(), [a], 'Removed a duplicate node.');
+	root.removeRecentCall(b).removeRecentCall(b).removeRecentCall(b);
+	t.deepEqual(root.listRecentCalls(), [a], 'Removed a non-present node repeatedly.');
 
 	// Detach.
 	a.detach();

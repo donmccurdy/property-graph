@@ -1,15 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-types */
-import {
-	LegacyRefListKeys,
-	LegacyRefMapKeys,
-	LiteralKeys,
-	Nullable,
-	RefKeys,
-	RefListKeys,
-	RefMapKeys,
-	RefSetKeys,
-} from './constants.js';
+import { LiteralKeys, Nullable, RefKeys, RefListKeys, RefMapKeys, RefSetKeys } from './constants.js';
 import { BaseEvent, EventDispatcher, GraphNodeEvent } from './event-dispatcher.js';
 import { Graph } from './graph.js';
 import { GraphEdge } from './graph-edge.js';
@@ -240,10 +231,9 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	 */
 
 	/** @hidden */
-	protected listRefs<
-		K extends RefListKeys<Attributes> | RefSetKeys<Attributes> | LegacyRefListKeys<Attributes>,
-		T extends GraphNode,
-	>(attribute: K): Attributes[K] extends RefList<T> | RefSet<T> | T[] ? T[] : never {
+	protected listRefs<K extends RefListKeys<Attributes> | RefSetKeys<Attributes>, T extends GraphNode>(
+		attribute: K,
+	): Attributes[K] extends RefList<T> | RefSet<T> | T[] ? T[] : never {
 		const refs = this.assertRefList(attribute);
 		return refs.values().map((ref) => ref.getChild()) as Attributes[K] extends RefList<T> | RefSet<T> | T[]
 			? T[]
@@ -251,12 +241,9 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	}
 
 	/** @hidden */
-	protected addRef<
-		K extends RefListKeys<Attributes> | RefSetKeys<Attributes> | LegacyRefListKeys<Attributes>,
-		T extends GraphNode,
-	>(
+	protected addRef<K extends RefListKeys<Attributes> | RefSetKeys<Attributes>, T extends GraphNode>(
 		attribute: K,
-		value: Attributes[K] extends RefList<T> | RefSet<T> | LegacyRefListKeys<Attributes> ? T : never,
+		value: Attributes[K] extends RefList<T> | RefSet<T> ? T : never,
 		attributes?: Record<string, unknown>,
 	): this {
 		const ref = this.graph.createEdge(attribute as string, this, value, attributes);
@@ -273,12 +260,9 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	}
 
 	/** @hidden */
-	protected removeRef<
-		K extends RefListKeys<Attributes> | RefSetKeys<Attributes> | LegacyRefListKeys<Attributes>,
-		T extends GraphNode,
-	>(
+	protected removeRef<K extends RefListKeys<Attributes> | RefSetKeys<Attributes>, T extends GraphNode>(
 		attribute: K,
-		value: Attributes[K] extends RefList<T> | RefSet<T> | LegacyRefListKeys<Attributes> ? T : never,
+		value: Attributes[K] extends RefList<T> | RefSet<T> ? T : never,
 	): this {
 		const refs = this.assertRefList(attribute);
 
@@ -295,9 +279,7 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	}
 
 	/** @hidden */
-	private assertRefList<K extends RefListKeys<Attributes> | RefSetKeys<Attributes> | LegacyRefListKeys<Attributes>>(
-		attribute: K,
-	): RefList | RefSet {
+	private assertRefList<K extends RefListKeys<Attributes> | RefSetKeys<Attributes>>(attribute: K): RefList | RefSet {
 		const list = this[$attributes][attribute];
 
 		if (list instanceof RefList || list instanceof RefSet) {
@@ -315,13 +297,13 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	 */
 
 	/** @hidden */
-	protected listRefMapKeys<K extends RefMapKeys<Attributes> | LegacyRefMapKeys<Attributes>>(attribute: K): string[] {
+	protected listRefMapKeys<K extends RefMapKeys<Attributes>>(attribute: K): string[] {
 		return this.assertRefMap(attribute).keys();
 	}
 
 	// TODO(types): Check.
 	/** @hidden */
-	protected listRefMapValues<K extends RefMapKeys<Attributes> | LegacyRefMapKeys<Attributes>>(
+	protected listRefMapValues<K extends RefMapKeys<Attributes>>(
 		attribute: K,
 	): GraphNode[] & Attributes[K][keyof Attributes[K]][] {
 		return this.assertRefMap(attribute)
@@ -331,10 +313,10 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 
 	// TODO(types): Check.
 	/** @hidden */
-	protected getRefMap<
-		K extends RefMapKeys<Attributes> | LegacyRefMapKeys<Attributes>,
-		SK extends keyof Attributes[K],
-	>(attribute: K, key: SK): (GraphNode & Attributes[K][SK]) | null {
+	protected getRefMap<K extends RefMapKeys<Attributes>, SK extends keyof Attributes[K]>(
+		attribute: K,
+		key: SK,
+	): (GraphNode & Attributes[K][SK]) | null {
 		const refMap = this.assertRefMap(attribute);
 		const ref = refMap.get(key as string);
 		return ref ? (ref.getChild() as GraphNode & Attributes[K][SK]) : null;
@@ -367,7 +349,7 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	}
 
 	/** @hidden */
-	private assertRefMap<K extends RefMapKeys<Attributes> | LegacyRefMapKeys<Attributes>>(attribute: K): RefMap {
+	private assertRefMap<K extends RefMapKeys<Attributes>>(attribute: K): RefMap {
 		const map = this[$attributes][attribute];
 
 		if (map instanceof RefMap) {
