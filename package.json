@@ -33,15 +33,15 @@
 		"postversion": "git push && git push --tags && npm publish --tag next && yarn coverage:report"
 	},
 	"devDependencies": {
-		"@typescript-eslint/eslint-plugin": "6.18.0",
-		"@typescript-eslint/parser": "6.18.0",
+		"@typescript-eslint/eslint-plugin": "6.18.1",
+		"@typescript-eslint/parser": "6.18.1",
 		"ava": "^6.0.1",
 		"c8": "^9.0.0",
 		"coveralls": "3.1.1",
 		"eslint": "8.56.0",
 		"eslint-config-prettier": "9.1.0",
 		"microbundle": "0.15.1",
-		"prettier": "3.1.1",
+		"prettier": "3.2.2",
 		"rimraf": "^5.0.5",
 		"tsx": "^4.7.0",
 		"typescript": "5.3.3"
