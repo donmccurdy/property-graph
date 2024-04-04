@@ -1,12 +1,12 @@
 import test from 'ava';
-import { Graph, GraphNode, GraphEdge, RefSet, RefList, RefMap, Nullable } from 'property-graph';
+import { Graph, GraphNode, GraphEdge, RefSet, RefList, RefLinkedList, RefMap, Nullable } from 'property-graph';
 
 interface IPerson {
 	name: string;
 	age: number;
 	partner: Person;
 	friends: RefSet<Person>;
-	recentCalls: RefList<Person>;
+	recentCalls: RefLinkedList<Person>;
 	relatives: RefMap<Person>;
 }
 
@@ -20,7 +20,7 @@ class Person extends GraphNode<IPerson> {
 			age: 0,
 			partner: null,
 			friends: new RefSet(),
-			recentCalls: new RefList(),
+			recentCalls: new RefLinkedList(),
 			relatives: new RefMap(),
 		};
 	}
@@ -100,12 +100,15 @@ test('property-graph::graph | edge management', (t) => {
 	t.deepEqual(root.listFriends(), [a], 'Removed a non-present node repeatedly.');
 
 	// Duplicates allowed.
+	debugger;
 	root.addRecentCall(a).addRecentCall(b).addRecentCall(b).addRecentCall(b);
 	t.deepEqual(root.listRecentCalls(), [a, b, b, b], 'Added duplicate nodes.');
 	root.removeRecentCall(b);
 	t.deepEqual(root.listRecentCalls(), [a], 'Removed a duplicate node.');
 	root.removeRecentCall(b).removeRecentCall(b).removeRecentCall(b);
 	t.deepEqual(root.listRecentCalls(), [a], 'Removed a non-present node repeatedly.');
+	root.removeRecentCall(a);
+	t.deepEqual(root.listRecentCalls(), [], 'Remove last node.');
 
 	root.setRelative('child', a).setRelative('nephew', b);
 	a.setRelative('parent', root).setRelative('cousin', b);

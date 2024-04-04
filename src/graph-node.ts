@@ -13,7 +13,7 @@ import {
 import { BaseEvent, EventDispatcher, GraphNodeEvent } from './event-dispatcher.js';
 import { Graph } from './graph.js';
 import { GraphEdge } from './graph-edge.js';
-import { Ref, RefList, RefMap, RefSet } from './refs.js';
+import { Ref, RefLinkedList, RefList, RefMap, RefSet } from './refs.js';
 
 // References:
 // - https://stackoverflow.com/a/70163679/1314762
@@ -23,10 +23,10 @@ type GraphNodeAttributesInternal<Parent extends GraphNode, Attributes extends {}
 	[Key in keyof Attributes]: Attributes[Key] extends GraphNode
 		? GraphEdge<Parent, Attributes[Key]>
 		: Attributes[Key] extends GraphNode[]
-		? GraphEdge<Parent, Attributes[Key][number]>[]
-		: Attributes[Key] extends { [key: string]: GraphNode }
-		? Record<string, GraphEdge<Parent, Attributes[Key][string]>>
-		: Attributes[Key];
+			? GraphEdge<Parent, Attributes[Key][number]>[]
+			: Attributes[Key] extends { [key: string]: GraphNode }
+				? Record<string, GraphEdge<Parent, Attributes[Key][string]>>
+				: Attributes[Key];
 };
 
 export const $attributes = Symbol('attributes');
@@ -272,7 +272,7 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	): this {
 		const refs = this.assertRefList(attribute);
 
-		if (refs instanceof RefList) {
+		if (refs instanceof RefList || refs instanceof RefLinkedList) {
 			for (const ref of refs.removeChild(value)) {
 				ref.dispose();
 			}
@@ -285,10 +285,12 @@ export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatc
 	}
 
 	/** @hidden */
-	private assertRefList<K extends RefListKeys<Attributes> | RefSetKeys<Attributes>>(attribute: K): RefList | RefSet {
+	private assertRefList<K extends RefListKeys<Attributes> | RefSetKeys<Attributes>>(
+		attribute: K,
+	): RefList | RefLinkedList | RefSet {
 		const list = this[$attributes][attribute];
 
-		if (list instanceof RefList || list instanceof RefSet) {
+		if (list instanceof RefList || list instanceof RefLinkedList || list instanceof RefSet) {
 			return list;
 		}
 

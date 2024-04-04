@@ -50,6 +50,79 @@ export class RefList<T extends GraphNode = GraphNode> {
 	}
 }
 
+interface LLItem<T> {
+	prev: LLItem<T> | null;
+	next: LLItem<T> | null;
+	ref: T;
+}
+
+/**
+ * An ordered collection of {@link Ref Refs}, allowing duplicates,
+ * stored as a linked list.
+ * @experimental
+ */
+export class RefLinkedList<T extends GraphNode = GraphNode> {
+	private _head: LLItem<Ref<T>> | null = null;
+	private _tail: LLItem<Ref<T>> | null = null;
+	constructor(refs?: Ref<T>[]) {
+		if (refs) {
+			for (const ref of refs) {
+				this.add(ref);
+			}
+		}
+	}
+	add(ref: Ref<T>): void {
+		const next = { prev: this._tail, next: null, ref };
+		this._head ||= next;
+		if (this._tail) {
+			this._tail.next = next;
+		}
+		this._tail = next;
+	}
+	remove(ref: Ref<T>): void {
+		for (let item = this._head; item; item = item.next) {
+			if (item.ref === ref) {
+				if (item.prev) item.prev.next = item.next;
+				if (item.next) item.next.prev = item.prev;
+				if (item === this._head) this._head = item.next;
+				if (item === this._tail) this._tail = item.prev;
+				// TODO(design): Break?
+			}
+		}
+	}
+	removeChild(child: T): Ref<T>[] {
+		const refs = [] as Ref<T>[];
+		for (let item = this._head; item; item = item.next) {
+			if (item.ref.getChild() === child) {
+				if (item.prev) item.prev.next = item.next;
+				if (item.next) item.next.prev = item.prev;
+				if (item === this._head) this._head = item.next;
+				if (item === this._tail) this._tail = item.prev;
+				refs.push(item.ref);
+				// TODO(design): Break?
+			}
+		}
+		return refs;
+	}
+	listRefsByChild(child: T): Ref<T>[] {
+		const refs = [] as Ref<T>[];
+		for (let item = this._head; item; item = item.next) {
+			if (item.ref.getChild() === child) {
+				refs.push(item.ref);
+				// TODO(design): Allow? getRefByChild?
+			}
+		}
+		return refs;
+	}
+	values(): Ref<T>[] {
+		const refs = [] as Ref<T>[];
+		for (let item = this._head; item; item = item.next) {
+			refs.push(item.ref);
+		}
+		return refs;
+	}
+}
+
 /**
  * An ordered collection of {@link Ref Refs}, without duplicates. Adding or
  * removing a Ref is typically O(1) or O(log(n)), and faster than
