@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/ban-types */
 import {
 	LiteralKeys,
 	Nullable,
@@ -19,7 +18,7 @@ import { Ref, RefList, RefMap, RefSet } from './refs.js';
 // - https://stackoverflow.com/a/70163679/1314762
 // - https://stackoverflow.com/a/70201805/1314762
 
-type GraphNodeAttributesInternal<Parent extends GraphNode, Attributes extends {}> = {
+type GraphNodeAttributesInternal<Parent extends GraphNode, Attributes extends object> = {
 	[Key in keyof Attributes]: Attributes[Key] extends GraphNode
 		? GraphEdge<Parent, Attributes[Key]>
 		: Attributes[Key] extends GraphNode[]
@@ -35,7 +34,7 @@ export const $immutableKeys = Symbol('immutableKeys');
 /**
  * Represents a node in a {@link Graph}.
  */
-export abstract class GraphNode<Attributes extends {} = {}> extends EventDispatcher<GraphNodeEvent> {
+export abstract class GraphNode<Attributes extends object = object> extends EventDispatcher<GraphNodeEvent> {
 	private _disposed = false;
 
 	/**
