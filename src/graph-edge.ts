@@ -1,4 +1,3 @@
-import { EventDispatcher, GraphEdgeEvent } from './event-dispatcher.js';
 import { GraphNode } from './graph-node.js';
 
 /**
@@ -9,22 +8,21 @@ import { GraphNode } from './graph-node.js';
  * that link. The resource does not hold a reference to the link or to the owner,
  * although that reverse lookup can be done on the graph.
  */
-export class GraphEdge<Parent extends GraphNode, Child extends GraphNode> extends EventDispatcher<GraphEdgeEvent> {
+export class GraphEdge<Parent extends GraphNode, Child extends GraphNode> {
 	private _disposed = false;
 
 	constructor(
 		private readonly _name: string,
 		private readonly _parent: Parent,
 		private _child: Child,
-		private _attributes: Record<string, unknown> = {}
+		private _attributes: Record<string, unknown> = {},
 	) {
-		super();
 		if (!_parent.isOnGraph(_child)) {
 			throw new Error('Cannot connect disconnected graphs.');
 		}
 	}
 
-	/** Name. */
+	/** Name (attribute name from parent {@link GraphNode}). */
 	getName(): string {
 		return this._name;
 	}
@@ -58,9 +56,9 @@ export class GraphEdge<Parent extends GraphNode, Child extends GraphNode> extend
 	/** Destroys a (currently intact) edge, updating both the graph and the owner. */
 	dispose(): void {
 		if (this._disposed) return;
+		// @ts-expect-error GraphEdge doesn't know types of parent GraphNode.
+		this._parent._destroyRef(this);
 		this._disposed = true;
-		this.dispatchEvent({ type: 'dispose', target: this });
-		super.dispose();
 	}
 
 	/** Whether this link has been destroyed. */
