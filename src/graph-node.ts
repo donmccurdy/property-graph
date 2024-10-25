@@ -22,10 +22,10 @@ type GraphNodeAttributesInternal<Parent extends GraphNode, Attributes extends ob
 	[Key in keyof Attributes]: Attributes[Key] extends GraphNode
 		? GraphEdge<Parent, Attributes[Key]>
 		: Attributes[Key] extends GraphNode[]
-		? GraphEdge<Parent, Attributes[Key][number]>[]
-		: Attributes[Key] extends { [key: string]: GraphNode }
-		? Record<string, GraphEdge<Parent, Attributes[Key][string]>>
-		: Attributes[Key];
+			? GraphEdge<Parent, Attributes[Key][number]>[]
+			: Attributes[Key] extends { [key: string]: GraphNode }
+				? Record<string, GraphEdge<Parent, Attributes[Key][string]>>
+				: Attributes[Key];
 };
 
 export const $attributes = Symbol('attributes');
@@ -100,8 +100,7 @@ export abstract class GraphNode<Attributes extends object = object> extends Even
 			// TODO(design): With Ref, RefList, and RefMap types, should users
 			// be able to pass them all here? Listeners must be added.
 			if (value instanceof GraphNode) {
-				const ref = this.graph.createEdge(key, this, value);
-				ref.addEventListener('dispose', () => value.dispose());
+				const ref = this.graph._createEdge(key, this, value);
 				this[$immutableKeys].add(key);
 				attributes[key] = ref as any;
 			} else {
@@ -223,11 +222,7 @@ export abstract class GraphNode<Attributes extends object = object> extends Even
 
 		if (!value) return this;
 
-		const ref = this.graph.createEdge(attribute as string, this, value, attributes);
-		ref.addEventListener('dispose', () => {
-			delete this[$attributes][attribute];
-			this.dispatchEvent({ type: 'change', attribute });
-		});
+		const ref = this.graph._createEdge(attribute as string, this, value, attributes);
 		(this[$attributes][attribute] as Ref) = ref;
 
 		return this.dispatchEvent({ type: 'change', attribute });
@@ -251,15 +246,9 @@ export abstract class GraphNode<Attributes extends object = object> extends Even
 		value: RefCollectionValue<Attributes[K]>,
 		attributes?: Record<string, unknown>,
 	): this {
-		const ref = this.graph.createEdge(attribute as string, this, value, attributes);
-
+		const ref = this.graph._createEdge(attribute as string, this, value, attributes);
 		const refs = this.assertRefList(attribute);
 		refs.add(ref);
-
-		ref.addEventListener('dispose', () => {
-			refs.remove(ref);
-			this.dispatchEvent({ type: 'change', attribute });
-		});
 
 		return this.dispatchEvent({ type: 'change', attribute });
 	}
@@ -272,11 +261,11 @@ export abstract class GraphNode<Attributes extends object = object> extends Even
 		const refs = this.assertRefList(attribute);
 
 		if (refs instanceof RefList) {
-			for (const ref of refs.removeChild(value)) {
+			for (const ref of refs.listRefsByChild(value)) {
 				ref.dispose();
 			}
 		} else {
-			const ref = refs.removeChild(value);
+			const ref = refs.getRefByChild(value);
 			if (ref) ref.dispose();
 		}
 
@@ -285,10 +274,10 @@ export abstract class GraphNode<Attributes extends object = object> extends Even
 
 	/** @hidden */
 	private assertRefList<K extends RefListKeys<Attributes> | RefSetKeys<Attributes>>(attribute: K): RefList | RefSet {
-		const list = this[$attributes][attribute];
+		const refs = this[$attributes][attribute];
 
-		if (list instanceof RefList || list instanceof RefSet) {
-			return list;
+		if (refs instanceof RefList || refs instanceof RefSet) {
+			return refs;
 		}
 
 		// TODO(v3) Remove warning.
@@ -338,11 +327,7 @@ export abstract class GraphNode<Attributes extends object = object> extends Even
 		if (!value) return this;
 
 		metadata = Object.assign(metadata || {}, { key: key });
-		const ref = this.graph.createEdge(attribute as string, this, value, { ...metadata, key });
-		ref.addEventListener('dispose', () => {
-			refMap.delete(key as string);
-			this.dispatchEvent({ type: 'change', attribute, key });
-		});
+		const ref = this.graph._createEdge(attribute as string, this, value, { ...metadata, key });
 		refMap.set(key as string, ref);
 
 		return this.dispatchEvent({ type: 'change', attribute, key });
@@ -372,5 +357,36 @@ export abstract class GraphNode<Attributes extends object = object> extends Even
 		super.dispatchEvent({ ...event, target: this });
 		this.graph.dispatchEvent({ ...event, target: this, type: `node:${event.type}` });
 		return this;
+	}
+
+	/**********************************************************************************************
+	 * Internal.
+	 */
+
+	/** @hidden */
+	_destroyRef<
+		K extends RefKeys<Attributes> | RefListKeys<Attributes> | RefSetKeys<Attributes> | RefMapKeys<Attributes>,
+	>(ref: GraphEdge<this, GraphNode & Attributes[K]>): void {
+		const attribute = ref.getName() as K;
+		if (this[$attributes][attribute] === ref) {
+			(this[$attributes][attribute as RefKeys<Attributes>] as Ref | null) = null;
+			// TODO(design): See _createAttributes().
+			if (this[$immutableKeys].has(attribute as string)) ref.getChild().dispose();
+		} else if (this[$attributes][attribute] instanceof RefList) {
+			(this[$attributes][attribute as RefListKeys<Attributes>] as RefList).remove(ref);
+		} else if (this[$attributes][attribute] instanceof RefSet) {
+			(this[$attributes][attribute as RefSetKeys<Attributes>] as RefSet).remove(ref);
+		} else if (this[$attributes][attribute] instanceof RefMap) {
+			const refMap = this[$attributes][attribute as RefMapKeys<Attributes>] as RefMap;
+			for (const key of refMap.keys()) {
+				if (refMap.get(key) === ref) {
+					refMap.delete(key);
+				}
+			}
+		} else {
+			return;
+		}
+		this.graph._destroyEdge(ref);
+		this.dispatchEvent({ type: 'change', attribute });
 	}
 }
