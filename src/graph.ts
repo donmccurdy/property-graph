@@ -25,7 +25,11 @@ export class Graph<T extends GraphNode> extends EventDispatcher<GraphEvent | Gra
 
 	/** Returns a list of parent nodes for the given child node. */
 	public listParents(node: T): T[] {
-		return this.listParentEdges(node).map((edge) => edge.getParent());
+		const parentSet = new Set<T>();
+		for (const edge of this.listParentEdges(node)) {
+			parentSet.add(edge.getParent());
+		}
+		return Array.from(parentSet);
 	}
 
 	/** Returns a list of all edges on the graph having the given node as their parent. */
@@ -57,7 +61,7 @@ export class Graph<T extends GraphNode> extends EventDispatcher<GraphEvent | Gra
 		name: string,
 		a: A,
 		b: B,
-		attributes?: Record<string, unknown>
+		attributes?: Record<string, unknown>,
 	): GraphEdge<A, B> {
 		return this._registerEdge(new GraphEdge(name, a, b, attributes)) as GraphEdge<A, B>;
 	}

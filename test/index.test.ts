@@ -228,3 +228,37 @@ test('property-graph::graph-node | swap', (t) => {
 	t.deepEqual(listLabels(graph.listParentEdges(a)), [], 'removed old edge');
 	t.deepEqual(listLabels(graph.listParentEdges(b)), [{ label: 'custom-label' }], 'persist attributes');
 });
+
+test('property-graph::graph | listParents', (t) => {
+	const graph = new Graph();
+	const root = new Person(graph).setName('root');
+	const a = new Person(graph).setName('a');
+	const b = new Person(graph).setName('b');
+	const c = new Person(graph).setName('c');
+
+	root.addFriend(a);
+	root.addFriend(b);
+	root.addFriend(c);
+
+	a.addFriend(b);
+	b.addFriend(c);
+
+	a.addRecentCall(b);
+
+	t.deepEqual(
+		graph.listParents(root).map((n) => (n as Person).getName()),
+		[],
+	);
+	t.deepEqual(
+		graph.listParents(a).map((n) => (n as Person).getName()),
+		['root'],
+	);
+	t.deepEqual(
+		graph.listParents(b).map((n) => (n as Person).getName()),
+		['root', 'a'],
+	);
+	t.deepEqual(
+		graph.listParents(c).map((n) => (n as Person).getName()),
+		['root', 'b'],
+	);
+});
