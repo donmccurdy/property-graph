@@ -22,7 +22,7 @@ export interface GraphEdgeEvent extends BaseEvent {
 export type EventListener<E> = (event: E) => void;
 
 export class EventDispatcher<T extends BaseEvent> {
-	private _listeners = {} as Record<string, EventListener<T>[]>;
+	private _listeners: Record<string, EventListener<T>[]> = {};
 
 	addEventListener(type: string, listener: EventListener<T>): this {
 		const listeners = this._listeners;
@@ -39,8 +39,6 @@ export class EventDispatcher<T extends BaseEvent> {
 	}
 
 	removeEventListener(type: string, listener: EventListener<T>): this {
-		if (this._listeners === undefined) return this;
-
 		const listeners = this._listeners;
 		const listenerArray = listeners[type];
 
@@ -56,8 +54,6 @@ export class EventDispatcher<T extends BaseEvent> {
 	}
 
 	dispatchEvent(event: T): this {
-		if (this._listeners === undefined) return this;
-
 		const listeners = this._listeners;
 		const listenerArray = listeners[event.type];
 
