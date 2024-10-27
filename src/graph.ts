@@ -39,7 +39,11 @@ export class Graph<T extends GraphNode> extends EventDispatcher<GraphEvent | Gra
 
 	/** Returns a list of child nodes for the given parent node. */
 	public listChildren(node: T): T[] {
-		return this.listChildEdges(node).map((edge) => edge.getChild());
+		const childSet = new Set<T>();
+		for (const edge of this.listChildEdges(node)) {
+			childSet.add(edge.getChild());
+		}
+		return Array.from(childSet);
 	}
 
 	public disconnectParents(node: T, filter?: (n: T) => boolean): this {

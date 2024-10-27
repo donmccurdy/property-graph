@@ -262,3 +262,37 @@ test('property-graph::graph | listParents', (t) => {
 		['root', 'b'],
 	);
 });
+
+test('property-graph::graph | listChildren', (t) => {
+	const graph = new Graph();
+	const root = new Person(graph).setName('root');
+	const a = new Person(graph).setName('a');
+	const b = new Person(graph).setName('b');
+	const c = new Person(graph).setName('c');
+
+	root.addFriend(a);
+	root.addFriend(b);
+	root.addFriend(c);
+
+	a.addFriend(b);
+	b.addFriend(c);
+
+	a.addRecentCall(b);
+
+	t.deepEqual(
+		graph.listChildren(root).map((n) => (n as Person).getName()),
+		['a', 'b', 'c'],
+	);
+	t.deepEqual(
+		graph.listChildren(a).map((n) => (n as Person).getName()),
+		['b'],
+	);
+	t.deepEqual(
+		graph.listChildren(b).map((n) => (n as Person).getName()),
+		['c'],
+	);
+	t.deepEqual(
+		graph.listChildren(c).map((n) => (n as Person).getName()),
+		[],
+	);
+});
