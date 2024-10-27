@@ -47,35 +47,33 @@ export class Graph<T extends GraphNode> extends EventDispatcher<GraphEvent | Gra
 	}
 
 	public disconnectParents(node: T, filter?: (n: T) => boolean): this {
-		let edges = this.listParentEdges(node);
-		if (filter) {
-			edges = edges.filter((edge) => filter(edge.getParent()));
+		for (const edge of this.listParentEdges(node)) {
+			if (!filter || filter(edge.getParent())) {
+				edge.dispose();
+			}
 		}
-		edges.forEach((edge) => edge.dispose());
 		return this;
-	}
-
-	/**
-	 * Creates a {@link GraphEdge} connecting two {@link GraphNode} instances. Edge is returned
-	 * for the caller to store.
-	 * @param a Owner
-	 * @param b Resource
-	 */
-	public createEdge<A extends T, B extends T>(
-		name: string,
-		a: A,
-		b: B,
-		attributes?: Record<string, unknown>,
-	): GraphEdge<A, B> {
-		return this._registerEdge(new GraphEdge(name, a, b, attributes)) as GraphEdge<A, B>;
 	}
 
 	/**********************************************************************************************
 	 * Internal.
 	 */
 
-	/** @hidden */
-	private _registerEdge(edge: GraphEdge<T, T>): GraphEdge<T, T> {
+	/**
+	 * Creates a {@link GraphEdge} connecting two {@link GraphNode} instances. Edge is returned
+	 * for the caller to store.
+	 * @param a Owner
+	 * @param b Resource
+	 * @hidden
+	 * @internal
+	 */
+	public _createEdge<A extends T, B extends T>(
+		name: string,
+		a: A,
+		b: B,
+		attributes?: Record<string, unknown>,
+	): GraphEdge<A, B> {
+		const edge = new GraphEdge(name, a, b, attributes);
 		this._edges.add(edge);
 
 		const parent = edge.getParent();
@@ -86,16 +84,17 @@ export class Graph<T extends GraphNode> extends EventDispatcher<GraphEvent | Gra
 		if (!this._childEdges.has(child)) this._childEdges.set(child, new Set());
 		this._childEdges.get(child)!.add(edge);
 
-		edge.addEventListener('dispose', () => this._removeEdge(edge));
 		return edge;
 	}
 
 	/**
-	 * Removes the {@link GraphEdge} from the {@link Graph}. This method should only
-	 * be invoked by the onDispose() listener created in {@link _registerEdge()}. The
-	 * public method of removing an edge is {@link GraphEdge.dispose}.
+	 * Detaches a {@link GraphEdge} from the {@link Graph}. Before calling this
+	 * method, ensure that the GraphEdge has first been detached from any
+	 * associated {@link GraphNode} attributes.
+	 * @hidden
+	 * @internal
 	 */
-	private _removeEdge(edge: GraphEdge<T, T>): this {
+	public _destroyEdge(edge: GraphEdge<T, T>): this {
 		this._edges.delete(edge);
 		this._parentEdges.get(edge.getParent())!.delete(edge);
 		this._childEdges.get(edge.getChild())!.delete(edge);
