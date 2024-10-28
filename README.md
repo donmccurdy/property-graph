@@ -3,7 +3,7 @@
 [![Latest NPM release](https://img.shields.io/npm/v/property-graph.svg)](https://www.npmjs.com/package/property-graph)
 [![npm bundle size](https://img.shields.io/bundlephobia/minzip/property-graph)](https://bundlephobia.com/package/property-graph)
 [![License](https://img.shields.io/badge/license-MIT-007ec6.svg)](https://github.com/donmccurdy/property-graph/blob/main/LICENSE)
-[![Build Status](https://github.com/donmccurdy/property-graph/workflows/build/badge.svg?branch=main&event=push)](https://github.com/donmccurdy/property-graph/actions?query=workflow%3Abuild)
+[![Build Status](https://github.com/donmccurdy/property-graph/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/donmccurdy/property-graph/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/donmccurdy/property-graph/branch/main/graph/badge.svg?token=S30LCC3L04)](https://codecov.io/gh/donmccurdy/property-graph)
 
 Extensible base for creating objects that behave like a Property Graph.
