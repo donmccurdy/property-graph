@@ -10,11 +10,11 @@ Extensible base for creating objects that behave like a Property Graph.
 
 ## Overview
 
-The `property-graph` package is intended as a foundation for libraries requiring many custom types of compatible parts, which can be represented as a [Property Graph](https://www.dataversity.net/what-is-a-property-graph/#). The Property Graph representation is useful for dependency chains, resource references, node-based art workflows, and a broader class of applications where Graph databases are common.
+The `property-graph` package provides a set of utility classes to be used for implementating libraries or applications based on a data model represented as a [Property Graph](https://www.dataversity.net/what-is-a-property-graph/#). A Property Graph representation is useful for working with dependency chains, nested resource references, node-based state workflows, and more.
 
-Conceptually, a Property Graph is a [labeled, directed multigraph](https://en.wikipedia.org/wiki/Multigraph#Labeling), in which entities ("nodes") may have named relationships ("edges") with other nodes on the graph. Both nodes and edges may also be associated with key/value attributes. Beyond that, `property-graph` is intended to be small and practical, rather than providing a large standard library for graph theory — if you need something more comprehensive, I'd suggest [`graphology`](https://graphology.github.io/).
+Conceptually, a Property Graph is a [labeled, directed multigraph](https://en.wikipedia.org/wiki/Multigraph#Labeling), in which entities ("nodes") may have named relationships ("edges") with other nodes on the graph. Both nodes and edges may be assigned arbitrary key/value attributes. Beyond that, `property-graph` is intended to be small and practical, rather than providing a large standard library for graph theory — if you need something more comprehensive, I'd suggest [`graphology`](https://graphology.github.io/).
 
-Typically, you'll define several classes inheriting from the base `GraphNode`. When using TypeScript, an interface should be provided defining the kinds of connections that each type of graph node allows. Then, `.set` and `.get` methods may be used to set key/value attributes (strings, numbers, booleans, ...), and `.getRef` and `.setRef` methods may be used to create edges (or relationships) to other nodes of a compatible type. All references have names, and support compile-time type-checking.
+Typically, you'll define custom classes inheriting from the base `GraphNode`. When using TypeScript, an interface should be provided defining the kinds of connections that each type of graph node allows. Then, `.set` and `.get` methods may be used to set key/value attributes (strings, numbers, booleans, ...), and `.getRef` and `.setRef` methods may be used to create edges (or relationships) to other nodes of a compatible type. All references have names, and support compile-time type-checking.
 
 ## Features
 
