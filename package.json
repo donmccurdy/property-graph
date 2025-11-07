@@ -1,6 +1,6 @@
 {
 	"name": "property-graph",
-	"version": "4.0.0-alpha.1",
+	"version": "4.0.0-alpha.2",
 	"description": "Base for creating objects that behave like a Property Graph.",
 	"type": "module",
 	"sideEffects": false,
