@@ -10,7 +10,6 @@
 		"isolatedModules": true,
 		"allowJs": false,
 		"declaration": true,
-		"stripInternal": true,
 		"strict": true,
 		"erasableSyntaxOnly": true,
 		"verbatimModuleSyntax": true,

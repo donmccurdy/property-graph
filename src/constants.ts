@@ -4,18 +4,6 @@ import type { RefList, RefMap, RefSet } from './refs.js';
 /** TypeScript utility for nullable types. */
 export type Nullable<T> = { [P in keyof T]: T[P] | null };
 
-/** Abstraction representing a typed array class. */
-export type TypedArray =
-	| Float64Array
-	| Float32Array
-	| Float16Array
-	| Uint32Array
-	| Uint16Array
-	| Uint8Array
-	| Int32Array
-	| Int16Array
-	| Int8Array;
-
 export type Literal =
 	| null
 	| boolean
@@ -23,8 +11,8 @@ export type Literal =
 	| string
 	| number[]
 	| string[]
-	| TypedArray
 	| ArrayBuffer
+	| ArrayBufferView
 	| Record<string, unknown>;
 
 export type LiteralKeys<T> = { [K in keyof T]-?: T[K] extends Literal ? K : never }[keyof T];
