@@ -3,12 +3,17 @@
 		"paths": {
 			"property-graph": ["./"]
 		},
-		"moduleResolution": "nodenext",
-		"lib": ["es2020", "dom"],
-		"target": "es2020",
-		"module": "es2020",
+		"moduleResolution": "NodeNext",
+		"module": "NodeNext",
+		"lib": ["ES2024"],
+		"target": "ES2024",
+		"isolatedModules": true,
+		"allowJs": false,
 		"declaration": true,
-		"typeRoots": ["node_modules/@types"],
-		"strict": true
+		"stripInternal": true,
+		"strict": true,
+		"erasableSyntaxOnly": true,
+		"verbatimModuleSyntax": true,
+		"useDefineForClassFields": true
 	}
 }

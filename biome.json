@@ -1,0 +1,34 @@
+{
+	"formatter": {
+		"includes": ["**", "!**/package.json"],
+		"indentStyle": "tab",
+		"lineWidth": 120
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single"
+		}
+	},
+	"linter": {
+		"rules": {
+			"style": {
+				"useAsConstAssertion": "error",
+				"useDefaultParameterLast": "error",
+				"useEnumInitializers": "error",
+				"useSelfClosingElements": "error",
+				"useSingleVarDeclarator": "error",
+				"noNonNullAssertion": "off",
+				"noParameterAssign": "off",
+				"noUnusedTemplateLiteral": "error",
+				"useNumberNamespace": "error",
+				"noInferrableTypes": "error",
+				"noUselessElse": "error"
+			},
+			"suspicious": {
+				"useIterableCallbackReturn": "off",
+				"noRedeclare": "off",
+				"noExplicitAny": "off"
+			}
+		}
+	}
+}
