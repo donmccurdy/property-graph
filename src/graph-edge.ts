@@ -1,4 +1,4 @@
-import { GraphNode } from './graph-node.js';
+import type { GraphNode } from './graph-node.js';
 
 /**
  * Represents a connection between two {@link GraphNode} resources in a {@link Graph}.
@@ -10,13 +10,16 @@ import { GraphNode } from './graph-node.js';
  */
 export class GraphEdge<Parent extends GraphNode, Child extends GraphNode> {
 	private _disposed = false;
+	private readonly _name: string;
+	private readonly _parent: Parent;
+	private _child: Child;
+	private _attributes: Record<string, unknown>;
 
-	constructor(
-		private readonly _name: string,
-		private readonly _parent: Parent,
-		private _child: Child,
-		private _attributes: Record<string, unknown> = {},
-	) {
+	constructor(_name: string, _parent: Parent, _child: Child, _attributes: Record<string, unknown> = {}) {
+		this._name = _name;
+		this._parent = _parent;
+		this._child = _child;
+		this._attributes = _attributes;
 		if (!_parent.isOnGraph(_child)) {
 			throw new Error('Cannot connect disconnected graphs.');
 		}

@@ -1,5 +1,5 @@
-import { GraphEdge } from './graph-edge.js';
-import { GraphNode } from './graph-node.js';
+import type { GraphEdge } from './graph-edge.js';
+import type { GraphNode } from './graph-node.js';
 
 export type Ref<T extends GraphNode = GraphNode> = GraphEdge<GraphNode, T>;
 

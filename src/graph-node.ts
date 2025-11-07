@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
+import type {
 	LiteralKeys,
 	Nullable,
 	RefCollectionValue,
@@ -9,10 +9,10 @@ import {
 	RefMapValue,
 	RefSetKeys,
 } from './constants.js';
-import { BaseEvent, EventDispatcher, GraphNodeEvent } from './event-dispatcher.js';
-import { Graph } from './graph.js';
+import { type BaseEvent, EventDispatcher, type GraphNodeEvent } from './event-dispatcher.js';
+import type { Graph } from './graph.js';
 import { GraphEdge } from './graph-edge.js';
-import { Ref, RefList, RefMap, RefSet } from './refs.js';
+import { type Ref, RefList, RefMap, RefSet } from './refs.js';
 
 // References:
 // - https://stackoverflow.com/a/70163679/1314762

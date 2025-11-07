@@ -5,7 +5,16 @@ import type { RefList, RefMap, RefSet } from './refs.js';
 export type Nullable<T> = { [P in keyof T]: T[P] | null };
 
 /** Abstraction representing a typed array class. */
-export type TypedArray = Float32Array | Uint32Array | Uint16Array | Uint8Array | Int32Array | Int16Array | Int8Array;
+export type TypedArray =
+	| Float64Array
+	| Float32Array
+	| Float16Array
+	| Uint32Array
+	| Uint16Array
+	| Uint8Array
+	| Int32Array
+	| Int16Array
+	| Int8Array;
 
 export type Literal =
 	| null

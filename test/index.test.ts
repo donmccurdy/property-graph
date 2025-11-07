@@ -1,5 +1,5 @@
 import test from 'ava';
-import { Graph, GraphNode, GraphEdge, RefSet, RefList, RefMap, Nullable } from 'property-graph';
+import { Graph, GraphEdge, GraphNode, type Nullable, RefList, RefMap, RefSet } from 'property-graph';
 
 interface IPerson {
 	name: string;

@@ -1,6 +1,6 @@
-import { EventDispatcher, GraphEdgeEvent, GraphEvent, GraphNodeEvent } from './event-dispatcher.js';
+import { EventDispatcher, type GraphEdgeEvent, type GraphEvent, type GraphNodeEvent } from './event-dispatcher.js';
 import { GraphEdge } from './graph-edge.js';
-import { GraphNode } from './graph-node.js';
+import type { GraphNode } from './graph-node.js';
 
 /**
  * A graph manages a network of {@link GraphNode} nodes, connected

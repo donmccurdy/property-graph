@@ -1,6 +1,6 @@
 import type { Graph } from './graph.js';
-import type { GraphNode } from './graph-node.js';
 import type { GraphEdge } from './graph-edge.js';
+import type { GraphNode } from './graph-node.js';
 
 export interface BaseEvent {
 	type: string;
