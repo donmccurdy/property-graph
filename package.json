@@ -1,6 +1,6 @@
 {
 	"name": "property-graph",
-	"version": "3.0.0",
+	"version": "4.0.0-alpha.0",
 	"description": "Base for creating objects that behave like a Property Graph.",
 	"type": "module",
 	"sideEffects": false,
@@ -54,5 +54,6 @@
 			"--experimental-strip-types"
 		]
 	},
-	"packageManager": "yarn@4.10.3"
+	"packageManager": "yarn@4.10.3",
+	"stableVersion": "3.0.0"
 }
