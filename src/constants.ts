@@ -7,10 +7,14 @@ export type Nullable<T> = { [P in keyof T]: T[P] | null };
 export type Literal =
 	| null
 	| boolean
-	| number
+	| boolean[]
+	| boolean[][]
 	| string
-	| number[]
 	| string[]
+	| string[][]
+	| number
+	| number[]
+	| number[][]
 	| ArrayBuffer
 	| ArrayBufferView
 	| Record<string, unknown>;
